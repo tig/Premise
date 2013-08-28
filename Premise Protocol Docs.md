@@ -193,7 +193,7 @@ Turn on 'fast mode' by setting the `FastMode` value of the object `{8D692EC9-EB7
 
 In 'fast mode' (see below) no HTTP headers are required and the command is not URL encoded
 
-    <content-length><space><command><\r\n\r\n>[content, size_is(content-length)]
+    <content-length><space><command>\r\n\r\n<content>
 
 #### Fast Mode Responses
 
