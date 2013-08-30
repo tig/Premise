@@ -106,6 +106,7 @@ namespace pr
         {
             var uri = new Uri(GetUrlFromSysUri(location) + "?f??" + property);
             var helper = new HttpHelper(uri, "POST", null, true, property, Username, Password);
+            //Debug.WriteLine("GetPropertyAsync: url = <" + uri + ">");
 
             TaskCompletionSource<string> tcs = new TaskCompletionSource<string>();
             //Debug.WriteLine("GetPropertyAsync: url = <" + uri.ToString() + ">");

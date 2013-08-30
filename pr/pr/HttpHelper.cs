@@ -48,7 +48,7 @@ namespace Premise.Services {
         }
 
         public HttpHelper(Uri requestUri, string httpMethod, string content, bool response, object context) {
-            //Debug.WriteLine("HttpHelper: requestURI = <{0}>, content = {1}, responseExpected = {2}", requestUri, content, response);
+           Debug.WriteLine("HttpHelper: requestURI = <{0}>, content = {1}, responseExpected = {2}", requestUri, content, response);
 
             _request = (HttpWebRequest) WebRequest.Create(requestUri);
             _request.ContentType = "application/x-www-form-urlencoded";
