@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.IsolatedStorage;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -84,6 +86,90 @@ namespace pr
             return uriServer.AbsoluteUri + SysUrl.Remove(0, 5);
         }
 
+        public delegate void PropertySubscriptionUpdate(string elemID, string value);
+
+        /// <summary>
+        ///   a - SubscribeToProperty
+        ///   http://localhost/sys/Home?a?targetelementid?64method?Brightness?subid?subname
+        /// </summary>
+        public async void SubscribeToProperty(string location, string property, string elemID, PropertySubscriptionUpdate callback)
+        {
+            var uri = new Uri(GetUrlFromSysUri(location) + "?a?" + elemID + "??" + property + "??");
+            Debug.WriteLine("SubscribeToProperty: url = <" + uri + ">");
+
+            using (TcpClient client = new TcpClient()) {
+                string requestString = "POST ";
+                requestString += uri.PathAndQuery;
+                requestString += " HTTP/1.1\r\n";
+                requestString += "User-Agent: Kindel pr\r\n";
+                requestString += "Host: home:86\r\n";
+                requestString += "Connection: Keep-Alive\r\n";
+                requestString += "\r\n";
+
+                await client.ConnectAsync(Host, Port);
+
+                using (NetworkStream stream = client.GetStream())
+                {
+                    // Process the response.
+                    StreamReader rdr = new StreamReader(stream);
+
+                    // Send the request.
+                    StreamWriter writer = new StreamWriter(stream);
+                    writer.Write(requestString);
+                    writer.Flush();
+
+                    int contentLength;
+                    string ID = null;
+                    while (!rdr.EndOfStream) {
+                        var line = rdr.ReadLine();
+                        Debug.WriteLine(line);
+
+                        if (line.StartsWith("Target-Element: ")) {
+                            ID = line.Substring("Target-Element: ".Length);
+                        }
+
+                        if (line.StartsWith("Content-Length: ") && 
+                            int.TryParse(line.Substring("Content-Length: ".Length), out contentLength)) {
+                            // Read the blank line
+                            if (!rdr.EndOfStream) {
+                                line = rdr.ReadLine();
+                                Debug.WriteLine(line);
+                            }
+
+                            // Read content
+                            char[] buffer = new char[contentLength];
+                            if (!rdr.EndOfStream) {
+                                rdr.ReadBlock(buffer, 0, contentLength);
+                                line = new string(buffer);
+                                Debug.WriteLine(line);
+                                callback(ID, line);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            //using (var client = new WebClient()) {
+            //    client.Credentials = new NetworkCredential(Username, Password);
+            //    client.OpenReadCompleted += (sender, e) =>
+            //    {
+            //        using (var reader = new StreamReader(e.Result))
+            //        {
+            //            while (!reader.EndOfStream) {
+            //                var line = reader.ReadLine();
+            //                callback(elemID, line);
+            //                Debug.WriteLine("Read " + line);
+            //            }
+            //            Debug.WriteLine("EndOfStream");
+            //        }
+            //    };
+            //    client.OpenReadAsync(uri, elemID);
+            //}
+
+            
+        }
+
         /// <summary>
         ///   e - SetValue (e.g. url = http://localhost/sys/Home/Kitchen/Overheadlight?e?PowerState, message contains
         ///   "0" or "1"), no response message-body
@@ -140,7 +226,7 @@ namespace pr
         public async Task<string> Connect()
         {
             Debug.WriteLine("PremiseServer.Connect: {0}", GetUrlFromSysUri("sys://Home"));
-            return await GetPropertyAsync("sys://Home", "DisplayName");
+            return null;// await GetPropertyAsync("sys://Home", "DisplayName");
         }
 
         #region Nested type: ConnectCompleteEventArgs

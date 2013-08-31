@@ -23,6 +23,8 @@ namespace pr
 
         public String Location;
 
+        private Guid _guid = Guid.NewGuid();
+
         public PremiseObject() {
         }
 
@@ -40,10 +42,19 @@ namespace pr
             return n;
         }
 
+        public void SubscribeToProperty(string property) {
+            var server = PremiseServer.Instance;
+            if (server != null && !String.IsNullOrEmpty(this.Location)) {
+                server.SubscribeToProperty(Location, property, _guid.ToString(), (id, value) => {
+                    Debug.WriteLine("Property Update: Object {0} {1} = {2}", id, property, value);
+                    _properties[property] = null; // this prevents sending back to server
+                    SetMember(property, value);
+                });
+            }
+        }
+
         public override bool TryGetMember(GetMemberBinder binder, out object result){
-            // Converting the property name to lowercase 
-            // so that property names become case-insensitive. 
-            string name = binder.Name;//.ToLower();
+            string name = binder.Name;
 
             // If the property name is found in a dictionary, 
             // set the result parameter to the property value and return true. 
@@ -58,9 +69,7 @@ namespace pr
         // If you try to set a value of a property that is 
         // not defined in the class, this method is called. 
         public override bool TrySetMember(SetMemberBinder binder, object value) {
-            // Converting the property name to lowercase 
-            // so that property names become case-insensitive.
-            string name = binder.Name;//.ToLower();
+            string name = binder.Name;
 
             // Only update value if it changed
             object current = null;

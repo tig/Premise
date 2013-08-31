@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -23,10 +25,10 @@ namespace pr
             [Option('s', "ssl", Required = false, DefaultValue = false, HelpText = "Use SSL?")]
             public bool Ssl { get; set; }
 
-            [Option('u', "username", Required = true, HelpText = "Username.")]
+            [Option('u', "username", Required = false, HelpText = "Username.")]
             public string Username { get; set; }
 
-            [Option('w', "password", Required = true, HelpText = "Password.")]
+            [Option('w', "password", Required = false, HelpText = "Password.")]
             public string Password { get; set; }
 
             [ParserState]
@@ -46,12 +48,24 @@ namespace pr
             var options = new Options();
             if (CommandLine.Parser.Default.ParseArguments(args, options))
             {
+                if (String.IsNullOrEmpty(options.Username)) {
+                    Console.Write("Username: ");
+                    options.Username = Console.ReadLine();
+                }
+
+                if (String.IsNullOrEmpty(options.Password))
+                {
+                    Console.Write("Password: ");
+                    options.Password = Console.ReadLine();
+                }
+
                 // Values are available here
                 var pr = new Program();
                 pr.Test(options.Host, options.Port, options.Ssl, options.Username, options.Password);
+                Console.WriteLine("Test completed.");
             }
 
-            Console.ReadLine();
+            while (Console.ReadKey().Key != ConsoleKey.Escape) ;
         }
 
         public static IEnumerable<ConsoleCommand> GetCommands() {
@@ -65,20 +79,25 @@ namespace pr
             server.Username = username;
             server.Password = password;
 
+            dynamic o = new PremiseObject();
+            ((PremiseObject)o).PropertyChanged += (sender, args) => {
+                Console.WriteLine("Property change: {0} = {1}", args.PropertyName, o.GetMember(args.PropertyName));
+            };
+
             Console.WriteLine("Connecting to {0}:{1} (SSL is {2})", host, port, ssl);
             Task<string> responseTask = server.Connect();
 
             Console.WriteLine("Waiting for connection...");
-            string response = await responseTask;
-            Console.WriteLine("Response: {0}", response);
-
-            Console.WriteLine("Upstairs Occupancy: {0}", await server.GetPropertyAsync("sys://Home/Upstairs", "Occupancy"));
-            Console.WriteLine("Downstairs Occupancy: {0}", await server.GetPropertyAsync("sys://Home/Downstairs", "Occupancy"));
-
-            dynamic o = new PremiseObject();
-            
+            Console.WriteLine("Response: {0}", await responseTask);
             int n = await o.Init("sys://Home/Downstairs/Office/Desk", "DisplayName", "PowerState", "Brightness");
             Console.WriteLine("Number of properties: {0}", n);
+            
+            //Console.WriteLine("Upstairs Occupancy: {0}",
+            //                  await server.GetPropertyAsync("sys://Home/Upstairs", "Occupancy"));
+            //Console.WriteLine("Downstairs Occupancy: {0}",
+            //                  await server.GetPropertyAsync("sys://Home/Downstairs", "Occupancy"));
+
+            o.SubscribeToProperty("Brightness");
 
             Console.WriteLine("Office Desk DisplayName: {0}", o.DisplayName);
             Console.WriteLine("Office Desk PowerState: {0}", o.PowerState);
@@ -87,6 +106,10 @@ namespace pr
             o.DisplayName = "Charlie_s New Desk";
             Console.WriteLine("Office Desk DisplayName: {0}", o.DisplayName);
 
+            o.SubscribeToProperty("DisplayName");
+
+            String d = o.DisplayName;
+            Console.WriteLine("Office Desk DisplayName: {0}", d);
         }
     }
 }
