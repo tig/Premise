@@ -8,6 +8,8 @@ The **Premise WebClient .NET Client Library** makes it easy to build .NET apps t
 
 The client is written in C# 4.5 (Visual Studio 2012) and makes heavy use of two features that may or may not be portable to other platforms: `dynamic` and `async / await`. I intend to make this library work on ASP.NET, Windows Phone, Windows 8, Android (Xamarin), and iOS (Xamarin). So far it has only been used in a console app.
 
+I've provided a little command line sample app called `pr` that I used for testing this library. You can find it [here.](..)
+
 ## Example Usage
 This example illustrates connecting to a device (a light in my home office). It shows subscribing to both the `Brightness` properties and shows setting properties.
 
