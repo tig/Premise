@@ -7,3 +7,5 @@ Premise WebClient .NET Client Library
 The **Premise WebClient .NET Client Library** makes it easy to build .NET apps that talk to Premise. It supports the entire [Premise WebClient Protocol](https://github.com/tig/Premise/blob/master/Premise%20Protocol%20Docs.md) including subscriptions so polling is not needed. See README.md in that project for more details. 
 
 
+## Library Documentation
+See the [project page for now](https://github.com/tig/Premise/tree/master/PremiseLib).
