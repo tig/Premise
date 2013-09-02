@@ -5,7 +5,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pr", "pr\pr.csproj", "{00F8
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PremiseServerTests", "PremiseServerTests\PremiseServerTests.csproj", "{CA13E2E0-63CC-4903-B7F3-DE32BE7F6550}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Premise", "Premise\Premise.csproj", "{AC0A6C0F-2710-4861-B248-C1F2E36EF507}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PremiseClientLib", "Premise\PremiseClientLib.csproj", "{AC0A6C0F-2710-4861-B248-C1F2E36EF507}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,6 +1,5 @@
-﻿// Copyright 2013 Charlie Kindel
+﻿// Copyright 2013 Kindel Systems
 //   
-// This file is part of pr
 //   
 
 using System;
@@ -10,6 +9,7 @@ using System.Dynamic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.CSharp.RuntimeBinder;
+using Premise;
 
 namespace Premise {
     /// <summary>

@@ -134,15 +134,15 @@ SYSConnector requests look like this (SetValue example)
 
     POST HTTP/1.1
     User-Agent: SYSConnector/1.0 (WinNT)
+    SYSConnector: true
     Connection: Keep-Alive
     Cookie: <cookie>
     Content-Type: text/plain
     Content-Length: <contentlength>
-    SYSConnector: true
     
     <content>
 
-If you do not specify then Premise will close the HTTP connection after each response. 
+If you do not specify `Connection: Keep-Alive` then Premise will close the HTTP connection after each response. It is not clear what happens if you don't specify `SYSConnector` (it may have something to do with authentication). 
     
 ## Normal Responses
 Responses are standard HTTP (except in "fast mode", described elsewhere). Generally of the form:

@@ -39,7 +39,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HttpHelper.cs" />
     <Compile Include="PremiseObject.cs" />
     <Compile Include="PremiseProperty.cs" />
     <Compile Include="PremiseServer.cs" />

@@ -1,4 +1,4 @@
-﻿// Copyright 2013 Charlie Kindel
+﻿// Copyright 2013 Kindel Systems
 //   
 //   
 
@@ -12,7 +12,8 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Premise.Annotations;
-using Premise.Services;
+using Premise;
+
 namespace Premise
 {
     /// <summary>
@@ -48,7 +49,6 @@ namespace Premise
 
         #region Delegates
         public delegate void GetPropertyCompletionMethod(DownloadStringCompletedEventArgs e);
-        public delegate void InvokeMethodCompletionMethod(HttpResponseCompleteEventArgs e);
         #endregion
 
         private const Int32 TIMER_REQUERY_INTERVAL = 200; // 200 miliseconds
@@ -107,6 +107,7 @@ namespace Premise
         public async Task StartSubscriptionsAsync(){
             await _subscriptionClient.ConnectAsync(Host, Port);
 
+            // Generates a compiler warning, but it is what we want
             Task.Run(() => ReadSubscriptionResponses());
 
             // We do a GetValue so we know we have a good connection
@@ -117,7 +118,6 @@ namespace Premise
             foreach (var subscription in _subscriptions) {
                 SendSubscriptionRequest(subscription.Value);
             }
-
         }
 
         /// <summary>

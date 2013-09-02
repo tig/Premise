@@ -56,15 +56,15 @@
     <Compile Include="PremiseServerTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Premise\Premise.csproj">
-      <Project>{ac0a6c0f-2710-4861-b248-c1f2e36ef507}</Project>
-      <Name>Premise</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="OrderedTest1.orderedtest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Premise\PremiseClientLib.csproj">
+      <Project>{ac0a6c0f-2710-4861-b248-c1f2e36ef507}</Project>
+      <Name>PremiseClientLib</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

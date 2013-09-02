@@ -1,25 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// Copyright 2013 Kindel Systems
+//   
+// This file is part of pr
+//   
 
-namespace Premise{
+using System;
+
+namespace Premise {
     /// <summary>
-    /// This class supports mapping Premise's type system to .NET
-    /// Premise has a complete type system that mostly maps, but 
-    /// with some exceptions.
-    /// 
-    /// TODO: Support additional type mappings
+    ///     This class supports mapping Premise's type system to .NET
+    ///     Premise has a complete type system that mostly maps, but
+    ///     with some exceptions.
+    ///     TODO: Support additional type mappings
     /// </summary>
-    public class PremiseProperty
-    {
+    public class PremiseProperty {
         public enum PremiseType {
             TypeObjectRef,
             TypeText,
             TypeBoolean,
             TypeInteger,
-            TypeFloat,  
+            TypeFloat,
             TypeColor,
             TypeStaticText,
             TypeDateTime,
@@ -51,6 +50,8 @@ namespace Premise{
             Picture
         }
 
+        private object _value;
+
         public PremiseProperty(String propertyName, PremiseType type, bool persistent = false, bool ignoreServer = false) {
             Name = propertyName;
             PropertyType = type;
@@ -60,13 +61,12 @@ namespace Premise{
         }
 
         /// <summary>
-        /// The Premse type
+        ///     The Premse type
         /// </summary>
         public PremiseType PropertyType { get; set; }
 
-        private object _value;
         /// <summary>
-        /// The property value. 
+        ///     The property value.
         /// </summary>
         public object Value {
             get { return _value; }
@@ -86,7 +86,6 @@ namespace Premise{
                             _value = b;
                         else if (value is int) {
                             _value = ((int) value != 0);
-
                         }
                         else if (value is string) {
                             switch (value.ToString().ToLower()) {
@@ -107,7 +106,7 @@ namespace Premise{
                     case PremiseType.TypeInteger:
                         int i;
                         if (int.TryParse(value.ToString(), out i))
-                            _value =i;
+                            _value = i;
                         break;
                     case PremiseType.TypeFloat:
                         double d;
@@ -119,7 +118,7 @@ namespace Premise{
                         if (value.ToString().EndsWith("%")) {
                             int n;
                             if (int.TryParse(value.ToString().Replace("%", ""), out n))
-                                _value = (double)n / 100;
+                                _value = (double) n/100;
                         }
                         else if (double.TryParse(value.ToString(), out p))
                             _value = p;
@@ -131,7 +130,7 @@ namespace Premise{
                         if (value is DateTime)
                             _value = value;
                         else if (DateTime.TryParse(value.ToString(), out dt))
-                             _value = dt;
+                            _value = dt;
                         break;
                     case PremiseType.TypeObjectRef:
                     case PremiseType.TypeColor:
@@ -163,26 +162,26 @@ namespace Premise{
                         _value = value;
                         break;
                 }
-            } 
+            }
         }
 
         /// <summary>
-        ///   The name of the property. Matches the name on the server.
+        ///     The name of the property. Matches the name on the server.
         /// </summary>
         public string Name { get; set; }
 
         /// <summary>
-        ///   If True then this property value should be persisted on the client 
-        ///   and never refreshed from the server (e.g. it never changes on the server, so don't 
-        ///   ask for it again). 
+        ///     If True then this property value should be persisted on the client
+        ///     and never refreshed from the server (e.g. it never changes on the server, so don't
+        ///     ask for it again).
         /// </summary>
         public bool Persistent { get; set; }
 
         /// <summary>
-        ///   If True then this property value will never be retrieved from the server. This is useful
-        ///   for property values on the server we want to ingore on the client such as DisplayName's that
-        ///   change on the server for random reasons (e.g. IrrigationPro stores interal state in DisplayName that
-        ///   we don't care about).
+        ///     If True then this property value will never be retrieved from the server. This is useful
+        ///     for property values on the server we want to ingore on the client such as DisplayName's that
+        ///     change on the server for random reasons (e.g. IrrigationPro stores interal state in DisplayName that
+        ///     we don't care about).
         /// </summary>
         public bool IgnoreServer { get; set; }
 
