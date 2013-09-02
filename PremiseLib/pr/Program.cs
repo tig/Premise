@@ -7,9 +7,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using CommandLine;
@@ -28,6 +30,8 @@ namespace PremiseLib {
         private readonly PremiseServer _server = PremiseServer.Instance;
 
         private static void Main(string[] args) {
+            Console.SetOut(new PrDebugWriter());
+
             Console.WriteLine("Premise");
 
             var options = new Options();
@@ -139,7 +143,7 @@ namespace PremiseLib {
                 await home.AddPropertyAsync("_xml", PremiseProperty.PremiseType.TypeText, true);
 
                 //Load xml
-                XDocument xdoc = XDocument.Parse(((dynamic) home)._xml);
+                XDocument xdoc = XDocument.Parse(((dynamic)home)._xml);
 
                 //Run query
                 var objs = from obj in xdoc.Descendants("Object")
@@ -152,8 +156,8 @@ namespace PremiseLib {
                     var properties = new List<PremiseProperty>();
                     var o = new PremiseObject(obj.Attribute("ID").Value);
                     o.PropertyChanged += (sender, args) => {
-                        var val = ((PremiseObject) sender).GetMember(args.PropertyName);
-                        Console.WriteLine("{0}: {1} = {2}", ((PremiseObject) sender).Location, args.PropertyName, val);
+                        var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                        Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
                     };
 
                     foreach (var att in obj.Attributes()) {
@@ -217,6 +221,27 @@ namespace PremiseLib {
             public string GetUsage() {
                 return HelpText.AutoBuild(this,
                                           (HelpText current) => HelpText.DefaultParsingErrorsHandler(this, current));
+            }
+        }
+
+        public class PrDebugWriter : StringWriter {
+            //save static reference to stdOut
+            static TextWriter stdOut = Console.Out;
+
+            public override void WriteLine(string value) {
+                Debug.WriteLine(value);
+                stdOut.WriteLine(value);
+                base.WriteLine(value);
+            }
+
+            public override void Write(string value) {
+                Debug.Write(value);
+                stdOut.Write(value);
+                base.Write(value);
+            }
+
+            public override Encoding Encoding {
+                get { return Encoding.Unicode; }
             }
         }
     }
