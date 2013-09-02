@@ -165,7 +165,7 @@ namespace PremiseLib {
                         if (att.Name.ToString().Equals("Script")) continue;
                         if (att.Name.ToString().Equals("BoundObject")) continue;
                         if (att.Name.ToString().Equals("TargetProperty")) continue;
-                        o.AddPropertyAsync(att.Name.ToString(), PremiseProperty.PremiseType.TypeText, true);
+                        Task tast = o.AddPropertyAsync(att.Name.ToString(), PremiseProperty.PremiseType.TypeText, true);
                     }
                 }
             }

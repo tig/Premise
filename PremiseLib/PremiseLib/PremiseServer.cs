@@ -106,8 +106,10 @@ namespace PremiseLib
         public async Task StartSubscriptionsAsync(){
             await _subscriptionClient.ConnectAsync(Host, Port);
 
-            // Generates a compiler warning, but it is what we want
-            Task.Run(() => ReadSubscriptionResponses());
+            // Assign the resulting task to a local variable to get around
+            // the compiler warning about not awaiting this.
+            // http://stackoverflow.com/questions/18577054/alternative-to-task-run-that-doesnt-throw-warning
+            Task task = Task.Run(() => ReadSubscriptionResponses());
 
             // We do a GetValue so we know we have a good connection
             SendRequest("sys://Home?f??" + "Name");
