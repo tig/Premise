@@ -2,13 +2,19 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
 using CommandLine;
 using CommandLine.Text;
 using ManyConsole;
+using Microsoft.CSharp.RuntimeBinder;
+using Premise;
 
 namespace pr
 {
@@ -62,54 +68,170 @@ namespace pr
                 // Values are available here
                 var pr = new Program();
                 pr.Test(options.Host, options.Port, options.Ssl, options.Username, options.Password);
-                Console.WriteLine("Test completed.");
+                Console.WriteLine("Press Q to quit.");
             }
 
-            while (Console.ReadKey().Key != ConsoleKey.Escape) ;
+            while (Console.ReadKey().Key != ConsoleKey.Q) ;
         }
 
         public static IEnumerable<ConsoleCommand> GetCommands() {
             return ConsoleCommandDispatcher.FindCommandsInSameAssemblyAs(typeof(Program));
         }
 
-        public async void Test(string host, int port, bool ssl, string username, string password) {
-            PremiseServer server = PremiseServer.Instance;
-            server.Host = host;
-            server.Port = port;
-            server.Username = username;
-            server.Password = password;
+        PremiseServer _server = PremiseServer.Instance;
 
-            dynamic o = new PremiseObject();
-            ((PremiseObject)o).PropertyChanged += (sender, args) => {
-                Console.WriteLine("Property change: {0} = {1}", args.PropertyName, o.GetMember(args.PropertyName));
+        public async void Test(string host, int port, bool ssl, string username, string password) {
+            _server.Host = host;
+            _server.Port = port;
+            _server.Username = username;
+            _server.Password = password;
+
+            _server.PropertyChanged += (sender, args) => {
+                if (args.PropertyName == "Connected")
+                    Console.WriteLine("Server: {0} = {1}", args.PropertyName, ((PremiseServer) sender).Connected);
+                if (args.PropertyName == "FastMode")
+                    Console.WriteLine("Server: {0} = {1}", args.PropertyName, ((PremiseServer)sender).FastMode);
             };
 
-            Console.WriteLine("Connecting to {0}:{1} (SSL is {2})", host, port, ssl);
-            Task<string> responseTask = server.Connect();
+            try
+            {
+                Console.WriteLine("Starting Subscriptions on {0}:{1} (SSL is {2})", host, port, ssl);
+                await _server.StartSubscriptionsAsync();
+                _server.FastMode = true;
 
-            Console.WriteLine("Waiting for connection...");
-            Console.WriteLine("Response: {0}", await responseTask);
-            int n = await o.Init("sys://Home/Downstairs/Office/Desk", "DisplayName", "PowerState", "Brightness");
-            Console.WriteLine("Number of properties: {0}", n);
-            
-            //Console.WriteLine("Upstairs Occupancy: {0}",
-            //                  await server.GetPropertyAsync("sys://Home/Upstairs", "Occupancy"));
-            //Console.WriteLine("Downstairs Occupancy: {0}",
-            //                  await server.GetPropertyAsync("sys://Home/Downstairs", "Occupancy"));
+                await WatchObjectAsync("{71ECECDB-60F2-49DE-897C-5DEDB7088BF2}",
+                                 new PremiseProperty("Name", PremiseProperty.PremiseType.TypeText),
+                                 new PremiseProperty("DisplayName", PremiseProperty.PremiseType.TypeText),
+                                 new PremiseProperty("MotionDetected", PremiseProperty.PremiseType.TypeBoolean),
+                                 new PremiseProperty("LastTimeTriggered", PremiseProperty.PremiseType.TypeBoolean));
 
-            o.SubscribeToProperty("Brightness");
 
-            Console.WriteLine("Office Desk DisplayName: {0}", o.DisplayName);
-            Console.WriteLine("Office Desk PowerState: {0}", o.PowerState);
-            Console.WriteLine("Office Desk Brightness: {0}", o.Brightness);
+                PremiseObject office= new PremiseObject("sys://Home");
+                office.PropertyChanged += (sender, args) =>
+                {
+                    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                };
 
-            o.DisplayName = "Charlie_s New Desk";
-            Console.WriteLine("Office Desk DisplayName: {0}", o.DisplayName);
+                await office.AddPropertiesAsync();
+                await office.AddPropertyAsync("Occupancy", PremiseProperty.PremiseType.TypeBoolean, true);
+                await office.AddPropertyAsync("Type", PremiseProperty.PremiseType.TypeText, true);
+                await office.AddPropertyAsync("_xml", PremiseProperty.PremiseType.TypeText, true);
 
-            o.SubscribeToProperty("DisplayName");
+                PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
+                ob.PropertyChanged += (sender, args) => {
+                    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                };
 
-            String d = o.DisplayName;
-            Console.WriteLine("Office Desk DisplayName: {0}", d);
+                //await ob.AddPropertiesAsync();
+                await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
+                //await ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, true);
+
+                ((dynamic) ob).Brightness = ((dynamic) ob).Brightness - .15;
+                //await ob.AddPropertyAsync("Flags", PremiseProperty.PremiseType.TypeText, true);
+                //await ob.AddPropertyAsync("_xml", PremiseProperty.PremiseType.TypeText, true);
+
+                //((dynamic)ob).Brightness = "33%";
+                //((dynamic)ob).Brightness = ((dynamic)ob).Brightness + .25;
+
+                //PremiseObject motion = new PremiseObject("sys://Home/Downstairs/Office/Motion Detector");
+                //motion.PropertyChanged += (sender, args) =>
+                //{
+                //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                //};
+
+                //await motion.AddPropertiesAsync();
+                //await motion.AddPropertyAsync("MotionDetected", subscribe: true);
+                //await motion.AddPropertyAsync("LastTimeTriggered", PremiseProperty.PremiseType.TypeDateTime, subscribe: true);
+
+                //Console.WriteLine("{0:F}", ((dynamic)motion).LastTimeTriggered);
+
+                // sys://Home/Admin/EqupTemp_VoltageSensor
+                //PremiseObject voltage = await WatchObjectAsync("sys://Home/Admin/EqupTemp_VoltageSensor",
+                //                                              new PremiseProperty("Name",
+                //                                                                  PremiseProperty.PremiseType.TypeText),
+                //                                              new PremiseProperty("Voltage",
+                //                                                                  PremiseProperty.PremiseType.TypeFloat));
+                //voltage.PropertyChanged += (sender, args) =>
+                //{
+                //    //((dynamic)ob).Brightness = ((dynamic)voltage).Voltage / 2;
+                //    ((dynamic) office).Occupancy = !((dynamic) office).Occupancy;
+                //};
+                //string result = await _server.InvokeMethodTaskAsync("{A2214A6E-1A22-4A67-AEC7-CDB863C316BB}", "GetButtons()");
+                //foreach (string s in result.Split(',')) {
+                //    await WatchObjectAsync(s,
+                //        new PremiseProperty("Status",  PremiseProperty.PremiseType.TypeBoolean),
+                //        new PremiseProperty("Trigger", PremiseProperty.PremiseType.TypeBoolean));
+                //}
+
+
+                //XmlDocument doc = new XmlDocument();
+                //doc.LoadXml(((dynamic)office)._xml);
+                //XmlNodeList nodes = doc.SelectNodes("//Object");
+                //foreach (XmlElement n in nodes) {
+                //    Console.WriteLine("{0} {1}", n.Attributes["ID"].Value, n.Attributes["Name"].Value);
+                //}
+
+                //Load xml
+                //Debug.WriteLine((string)((dynamic)office)._xml);
+                XDocument xdoc = XDocument.Parse(((dynamic)office)._xml);
+                //Run query
+                var objs = from obj in xdoc.Descendants("Object")
+                           where obj.Attribute("Class").Value.Contains("sys://Schema/Device")
+                           select obj;
+                           
+                           //new {
+                           //    ID = lv1.Attribute("ID").Value,
+                           //    Name = lv1.Attribute("Name").Value,
+                           //    Class = lv1.Attribute("Class").Value
+                           //};
+
+
+                //Loop through results
+                foreach (var obj in objs) {
+                    List<PremiseProperty> properties = new List<PremiseProperty>();
+                    PremiseObject o = new PremiseObject(obj.Attribute("ID").Value);
+                    o.PropertyChanged += (sender, args) => {
+                        var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                        Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                    };
+
+                    foreach (var att in obj.Attributes()) {
+                        if (att.Name.ToString().Equals("ID")) continue;
+                        if (att.Name.ToString().Equals("Class")) continue;
+                        await o.AddPropertyAsync(att.Name.ToString(), PremiseProperty.PremiseType.TypeText, true);
+                    }
+                }
+
+            }
+            catch (WebException we) {
+                Console.WriteLine("WebException: {0}", we.Message);
+                var rdr = new StreamReader(we.Response.GetResponseStream());
+                while (!rdr.EndOfStream) {
+                    Console.WriteLine("  " + rdr.ReadLine());
+                }
+
+            } catch (RuntimeBinderException be)            {
+                Console.WriteLine("RuntimeBinderException: {0}", be.Message);
+            }
+        }
+
+        public async Task<PremiseObject> WatchObjectAsync(string location, params PremiseProperty[] properties) {
+            PremiseObject o = new PremiseObject(location);
+            o.PropertyChanged += (sender, args) => {
+                var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+            };
+
+            await o.AddPropertiesAsync(subscribe: true, properties: properties);
+
+            //foreach (var property in properties) {
+            //    _server.Subscribe(o, property.PropertyName);    
+            //}
+            return o;
+
         }
     }
 }

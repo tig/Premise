@@ -48,7 +48,7 @@ namespace Premise.Services {
         }
 
         public HttpHelper(Uri requestUri, string httpMethod, string content, bool response, object context) {
-           Debug.WriteLine("HttpHelper: requestURI = <{0}>, content = {1}, responseExpected = {2}", requestUri, content, response);
+           Debug.WriteLine(String.Format("HttpHelper: requestURI = <{0}>, content = {1}, responseExpected = {2}", requestUri, content, response));
 
             _request = (HttpWebRequest) WebRequest.Create(requestUri);
             _request.ContentType = "application/x-www-form-urlencoded";
@@ -110,7 +110,7 @@ namespace Premise.Services {
             //    OutstandingResponseRequests.Add(helper.request.RequestUri);
 
             ++HttpRequestsOutstanding;
-            Debug.WriteLine("BeginGetResponse: {0}", helper._request.RequestUri);
+            Debug.WriteLine("BeginGetResponse: " + helper._request.RequestUri);
             helper._request.BeginGetResponse(BeginResponse, helper);
         }
 
@@ -121,7 +121,7 @@ namespace Premise.Services {
             // When we aren't expecting a response, the timer will call Abort and we fall into here.
             // Check the response flag to see whether we should continue.
             if ((helper == null) ) return;
-            Debug.WriteLine("BeginResponse: uri = <{0}>", helper.Context.ToString());
+            Debug.WriteLine("BeginResponse: uri = " + helper.Context.ToString());
 
             try {
                 var response = (HttpWebResponse) helper._request.EndGetResponse(ar);

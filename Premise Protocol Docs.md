@@ -1,8 +1,8 @@
 # The Premise WebClient Protocol
 
-*By Charlie Kindel*
+*By Charlie Kindel @tig*
 
-*Version 0.1 - 2013-08-28*
+*Version 0.9 - 2013-09-28*
 
 This is a reverse engineered documentation of the Premise protocol spoken between the SYSConnector ActiveX control and the Premise Server. This is different than the protocol that Premise Builder and Minibroker use to talk to Premise Server.
 
@@ -55,19 +55,22 @@ Class subscriptions don't get property change events, just add/delete.
 
     <object>?c?<subid>
 
+* `<object>` is the Premise object to invoke the method on
+* `<subid>` is the subscription ID. This should be the `<targetelementid>` used when subscribing.
+
 ### d - InvokeMethod 
 
 	<object>?d?<targetelementid>?64<method>
 
 * `<object>` is the Premise object to invoke the method on
 * `<targetelementid>` is a client specific ID 
-* `<method>` is a method name. If the 64 prefix is present it is **base64** encoded.  Can be blank.
+* `<method>` is a method name. If the 64 prefix is present it is **base64** encoded. Method can have params; for example `SomeMethod("Hello", 42)`. Obviously, this type of call should use base64 encoding.
 
 Example:
 
     http://localhost/sys/Home?d??TestFn(True, "Gold")
 
-* Works with script functions.  Use method.TestFn, method.ParamName1, etc...
+* Works with script functions.  Use `method.TestFn1`, `method.ParamName1`, etc...
 * Does not work with script methods.
 * Does not appear to work with built-in object methods (e.g. IsOfExplicitType(type) fails).
 
@@ -114,12 +117,12 @@ Examples:
 
 	<object>?g?<commandname>
 
-* `<object>` is the Premise object to invoke the method on
+* `<object>` is the Premise object to invoke the command on
 * `<commandname>` is the name of the command to run
 
 Example:
 
-    http://localhost/sys/Home?d??TestFn(True, "Gold")
+    http://localhost/sys/Home?g?Command
 
 This is a fire & forget request.
 
@@ -131,13 +134,15 @@ SYSConnector requests look like this (SetValue example)
 
     POST HTTP/1.1
     User-Agent: SYSConnector/1.0 (WinNT)
-    User-Agent: SYSConnector/1.0 (WinCE)
+    Connection: Keep-Alive
     Cookie: <cookie>
     Content-Type: text/plain
     Content-Length: <contentlength>
     SYSConnector: true
     
     <content>
+
+If you do not specify then Premise will close the HTTP connection after each response. 
     
 ## Normal Responses
 Responses are standard HTTP (except in "fast mode", described elsewhere). Generally of the form:
@@ -155,6 +160,8 @@ Responses are standard HTTP (except in "fast mode", described elsewhere). Genera
 
 The mime-type is typically `text/hmtl` but `image/bmp`, `application/x-msmetafile`, `image/x-icon`, and `application/x-msmetafile` may be returned for images.
 
+In the case of subscriptions the socket will receive multiple responses, using this format. 
+
 ## Error Responses
 
 Doing something that results in an error (e.g. accessing an object that does not exist) will result in a 404. Premise appears to close the socket on the server side when this happens.
@@ -171,11 +178,12 @@ Doing something that results in an error (e.g. accessing an object that does not
 
 ## Premise Specific Responses
 
-Premise will send a response out of band of a specific POST or GET to indicate to the client status of the connection. The following responses may be sent.
+For subscription requests Premise will send a response indicate to the client status of the connection. The following responses may be sent.
 
 ### pauseConnection
+Premise supports 32 connections. It uses pause/resumeConnection to enforce this limit. 
 
-If the client gets this response it should assume all subscriptions have been cancelled and should stop stop sending new requests.
+If the client gets this response it should assume all subscriptions have been canceled and should stop stop sending new requests.
 
 ### resumeConnection
 
@@ -185,16 +193,27 @@ If the client gets this response it can resume sending requests.
 
 If the client gets the `fastMode` response fast mode is on. 
 
-Turn on 'fast mode' by setting the `FastMode` value of the object `{8D692EC9-EB74-4155-9D83-315872AC9800}` to True:
+Turn on 'fast mode' by setting the `FastMode` value of the object `{8D692EC9-EB74-4155-9D83-315872AC9800}` to any value:
 
-    /sys/{8D692EC9-EB74-4155-9D83-315872AC9800}??e?FastMode?[True/False]
+    {8D692EC9-EB74-4155-9D83-315872AC9800}??e?FastMode
+
+Premise Server ignores the content of this call. It will only turn FastMode on; the only way to turn it off is to close the connection and re-open it.
 
 #### Fast Mode Requests
 
-In 'fast mode' (see below) no HTTP headers are required and the command is not URL encoded
+In 'fast mode' (see below) no HTTP headers are required and the command is not URL encoded.
 
     <content-length><space><command>\r\n\r\n<content>
 
+* <content-length> is HEX encoded. No prefix, maximum 8 digits. E.g. `911` would be `0000038F`. 
+* <command> is of the form `/sys/xyz??e?abc` and is not URL encoded.
+
 #### Fast Mode Responses
 
-In 'fast mode' only the lines in the standard response after `Content-Type` are returned and the content is not URL encoded.
+In 'fast mode' only the lines in the standard response after `Content-Type` are returned. In other words, a FastMode response looks like this:
+
+    Target-Element: 232233
+    Content-Length: 5
+
+    False
+
