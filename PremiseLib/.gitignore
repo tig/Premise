@@ -21,12 +21,14 @@
 # VS Upgrade stuff #
 ####################
 UpgradeLog.XML
+UpgradeLog.htm
 _UpgradeReport_Files/
 ######################
 # VS Stuff
 ######################
 *.user
 *.suo
+*.DotSettings
 ###############
 # Directories #
 ###############
