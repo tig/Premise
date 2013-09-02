@@ -1,6 +1,6 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Premise;
+using PremiseLib;
 
 namespace PremiseServerTests
 {
@@ -9,7 +9,7 @@ namespace PremiseServerTests
     {
         [TestMethod]
         public void Boolean() {
-            var prop = new PremiseProperty("test", Premise.PremiseProperty.PremiseType.TypeBoolean);
+            var prop = new PremiseProperty("test", PremiseLib.PremiseProperty.PremiseType.TypeBoolean);
 
             prop.Value = -1; // true
             Assert.AreEqual(prop.Value, (bool)true);
@@ -42,7 +42,7 @@ namespace PremiseServerTests
         [TestMethod]
         public void Percent()
         {
-            var prop = new PremiseProperty("test", Premise.PremiseProperty.PremiseType.TypePercent);
+            var prop = new PremiseProperty("test", PremiseLib.PremiseProperty.PremiseType.TypePercent);
 
             prop.Value = 1; 
             Assert.AreEqual(prop.Value, 1.0);

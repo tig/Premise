@@ -9,9 +9,8 @@ using System.Dynamic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.CSharp.RuntimeBinder;
-using Premise;
 
-namespace Premise {
+namespace PremiseLib {
     /// <summary>
     ///     A local representation of an object on the Premise server.
     /// </summary>

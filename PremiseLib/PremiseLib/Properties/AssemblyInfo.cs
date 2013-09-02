@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("PremiseClientLib")]
+[assembly: AssemblyTitle("PremiseLib")]
 [assembly: AssemblyDescription("Premise WebClient .NET Client Library")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Kindel Systems")]

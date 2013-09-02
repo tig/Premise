@@ -11,10 +11,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Premise.Annotations;
-using Premise;
+using PremiseLib.Annotations;
 
-namespace Premise
+namespace PremiseLib
 {
     /// <summary>
     /// PremiseServer represents a Premise Server. It is a singleton class

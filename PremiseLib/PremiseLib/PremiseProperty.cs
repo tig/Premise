@@ -5,7 +5,7 @@
 
 using System;
 
-namespace Premise {
+namespace PremiseLib {
     /// <summary>
     ///     This class supports mapping Premise's type system to .NET
     ///     Premise has a complete type system that mostly maps, but

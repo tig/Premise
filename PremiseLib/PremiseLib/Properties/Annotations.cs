@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2007-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,8 @@
  */
 
 using System;
-using System.ComponentModel;
 
-namespace Premise.Annotations
+namespace PremiseLib.Annotations
 {
   /// <summary>
   /// Indicates that marked element should be localized or not.

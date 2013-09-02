@@ -56,14 +56,9 @@
     <Compile Include="PremiseServerTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="OrderedTest1.orderedtest">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Premise\PremiseClientLib.csproj">
-      <Project>{ac0a6c0f-2710-4861-b248-c1f2e36ef507}</Project>
-      <Name>PremiseClientLib</Name>
+    <ProjectReference Include="..\PremiseLib\PremiseLib.csproj">
+      <Project>{AC0A6C0F-2710-4861-B248-C1F2E36EF507}</Project>
+      <Name>PremiseLib</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>

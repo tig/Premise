@@ -16,11 +16,10 @@ using CommandLine;
 using CommandLine.Text;
 using ManyConsole;
 using Microsoft.CSharp.RuntimeBinder;
-using Premise;
 
 #endregion
 
-namespace pr {
+namespace PremiseLib {
     /// <summary>
     /// </summary>
     internal class Program {
