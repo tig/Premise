@@ -112,6 +112,8 @@
     <Compile Include="PremiseObject.cs" />
     <Compile Include="PremiseProperty.cs" />
     <Compile Include="PremiseServer.cs" />
+    <Compile Include="PremiseServerBase.cs" />
+    <Compile Include="PremiseSocket.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
