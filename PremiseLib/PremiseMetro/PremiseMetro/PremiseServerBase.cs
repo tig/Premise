@@ -33,6 +33,50 @@ namespace PremiseLib
     public sealed class PremiseServerBase : IDisposable, INotifyPropertyChanged {
 
         /// <summary>
+        /// True if the subscription socket has successfully 
+        /// recieved a valid response.
+        /// False if the connection is closed.
+        /// </summary>
+        public bool Connected {
+            get {
+                return _connected;
+            }
+
+            set {
+                if (value == _connected) return;
+                _connected = value;
+                OnPropertyChanged();
+            }
+        }
+
+
+        private bool _FastMode = false;
+        /// <summary>
+        /// Enable FastMode for the subscription socket.
+        /// (Does not apply to Get/Set/Invoke actions).
+        /// Setting this to False has no effect; close the 
+        /// subscription connection and re-open it to disable
+        /// FastMode.
+        /// </summary>
+        public bool FastMode
+        {
+            get {
+                return _FastMode;
+            }
+
+            set {
+                if (value == _FastMode) return;
+                _FastMode = true;
+                EnableFastMode();
+                if (CoreApplication.MainView.CoreWindow.Dispatcher.HasThreadAccess)
+                    OnPropertyChanged();
+                else
+                    CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal, () => OnPropertyChanged());
+            }
+        }
+
+        /// <summary>
         /// StartSubscriptionsAsync must be called if you want subscription change notifications.
         /// This starts the subscription engine. We always create one subscription for
         /// Home DisplayName to start (but ignore any updates).
