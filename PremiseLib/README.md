@@ -21,7 +21,7 @@ I've provided a little command line sample app called `pr` that I used for testi
 ### Example Usage
 This example illustrates connecting to a device (a light in my home office). It shows subscribing to both the `Brightness` properties and shows setting properties.
 
-```
+```C#
 PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
 
 // Create event handler to receive notifications when the value of a 
@@ -52,6 +52,39 @@ ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, true)
 ((dynamic)ob).Brightness = "33%";
 ```
 
+This example shows how you would create an ObservableCollection that could be easily consumed by a XAML based application on Windows 8 or Windows Phone.
+
+```C#
+    // Setup the collection
+	GarageDoorOpeners gdos = new GarageDoorOpeners();
+
+	foreach (PremiseObject garageDoorOpener in gdos) {
+	    garageDoorOpener.PropertyChanged += (sender, args) => {
+	        Console.WriteLine("{0}: {1} = {2}", 
+	            ((PremiseObject)sender).Location, 
+	            args.PropertyName, 
+	            ((PremiseObject)sender).GetMember(args.PropertyName));
+	    };
+	}
+	gdos[1].Trigger = true;
+
+
+// Helper observable class
+private class GarageDoorOpeners : ObservableCollection<dynamic> {
+    public GarageDoorOpeners() : base() {
+        Add(new PremiseObject("sys://Home/Upper Garage/West Garage Door"));
+        Add(new PremiseObject("sys://Home/Upper Garage/Center Garage Door"));
+        Add(new PremiseObject("sys://Home/Upper Garage/East Garage Door"));
+
+        foreach (PremiseObject o in this) {
+            o.AddPropertyAsync("Name", PremiseProperty.PremiseType.TypeText);
+            o.AddPropertyAsync("DisplayName", PremiseProperty.PremiseType.TypeText);
+            o.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
+            o.AddPropertyAsync("GarageDoorStatus", PremiseProperty.PremiseType.TypeText, true);
+        }
+    }
+}
+```
 ## What's Next?
 * Put the library on NuGet
 * Incorporate it into an Android app using Xamarin (Mono). This will suss out all cross-platform issues.

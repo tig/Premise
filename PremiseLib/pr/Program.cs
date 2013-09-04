@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -22,17 +23,12 @@ using Microsoft.CSharp.RuntimeBinder;
 #endregion
 
 namespace PremiseLib {
-    /// <summary>
-    /// </summary>
     internal class Program {
-        // Define a class to receive parsed values
-
         private readonly PremiseServer _server = PremiseServer.Instance;
-
         private static void Main(string[] args) {
             Console.SetOut(new PrDebugWriter());
-
-            Console.WriteLine("Premise");
+            Console.WriteLine("PremiseLib Test App - Copyright © 2013 Kindel Systems");
+            Console.WriteLine("Press Q to quit.");
 
             var options = new Options();
             if (Parser.Default.ParseArguments(args, options)) {
@@ -40,22 +36,17 @@ namespace PremiseLib {
                     Console.Write("Username: ");
                     options.Username = Console.ReadLine();
                 }
-
                 if (String.IsNullOrEmpty(options.Password)) {
                     Console.Write("Password: ");
                     options.Password = Console.ReadLine();
                 }
-
-                // Values are available here
                 var pr = new Program();
                 pr.Test(options.Host, options.Port, options.Ssl, options.Username, options.Password);
-                Console.WriteLine("Press Q to quit.");
             }
-
             while (Console.ReadKey().Key != ConsoleKey.Q) ;
         }
 
-        public static IEnumerable<ConsoleCommand> GetCommands() {
+        private static IEnumerable<ConsoleCommand> GetCommands() {
             return ConsoleCommandDispatcher.FindCommandsInSameAssemblyAs(typeof (Program));
         }
 
@@ -133,45 +124,57 @@ namespace PremiseLib {
                 //    Console.WriteLine("{0} {1}", n.Attributes["ID"].Value, n.Attributes["Name"].Value);
                 //}
 
-                // This can take a while with a lot of objects
-                var home = new PremiseObject("sys://Home/Downstairs");
-                home.PropertyChanged += (sender, args) => {
-                    var val = ((PremiseObject) sender).GetMember(args.PropertyName);
-                    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject) sender).Location, args.PropertyName, val);
-                };
+                //// This can take a while with a lot of objects
+                //var home = new PremiseObject("sys://Home/Downstairs");
+                //home.PropertyChanged += (sender, args) => {
+                //    var val = ((PremiseObject) sender).GetMember(args.PropertyName);
+                //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject) sender).Location, args.PropertyName, val);
+                //};
 
-                await home.AddPropertyAsync("_xml", PremiseProperty.PremiseType.TypeText, true);
+                //await home.AddPropertyAsync("_xml", PremiseProperty.PremiseType.TypeText, true);
 
-                //Load xml
-                XDocument xdoc = XDocument.Parse(((dynamic)home)._xml);
+                ////Load xml
+                //XDocument xdoc = XDocument.Parse(((dynamic)home)._xml);
 
-                //Run query
-                var objs = from obj in xdoc.Descendants("Object")
-                           where
-                               obj.Attribute("Class").Value.Contains("sys://Schema/Device")
-                           select obj;
+                ////Run query
+                //var objs = from obj in xdoc.Descendants("Object")
+                //           where
+                //               obj.Attribute("Class").Value.Contains("sys://Schema/Device")
+                //           select obj;
 
-                //Loop through results
-                foreach (var obj in objs) {
-                    var properties = new List<PremiseProperty>();
-                    var o = new PremiseObject(obj.Attribute("ID").Value);
-                    o.PropertyChanged += (sender, args) => {
-                        var val = ((PremiseObject)sender).GetMember(args.PropertyName);
-                        Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                ////Loop through results
+                //foreach (var obj in objs) {
+                //    var properties = new List<PremiseProperty>();
+                //    var o = new PremiseObject(obj.Attribute("ID").Value);
+                //    o.PropertyChanged += (sender, args) => {
+                //        var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                //        Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                //    };
+
+                //    foreach (var att in obj.Attributes()) {
+                //        if (att.Name.ToString().Equals("ID")) continue;
+                //        if (att.Name.ToString().Equals("Class")) continue;
+                //        if (att.Name.ToString().Equals("Flags")) continue;
+                //        if (att.Name.ToString().Equals("OccupancyLastTrigger")) continue;
+                //        if (att.Name.ToString().Equals("OccupancyTimeTriggered")) continue;
+                //        if (att.Name.ToString().Equals("Script")) continue;
+                //        if (att.Name.ToString().Equals("BoundObject")) continue;
+                //        if (att.Name.ToString().Equals("TargetProperty")) continue;
+                //        Task tast = o.AddPropertyAsync(att.Name.ToString(), PremiseProperty.PremiseType.TypeText, true);
+                //    }
+                //}
+
+                GarageDoorOpeners gdos = new GarageDoorOpeners();
+                foreach (PremiseObject garageDoorOpener in gdos) {
+                    garageDoorOpener.PropertyChanged += (sender, args) => {
+                        Console.WriteLine("{0}: {1} = {2}", 
+                            ((PremiseObject)sender).Location, 
+                            args.PropertyName, 
+                            ((PremiseObject)sender).GetMember(args.PropertyName));
                     };
-
-                    foreach (var att in obj.Attributes()) {
-                        if (att.Name.ToString().Equals("ID")) continue;
-                        if (att.Name.ToString().Equals("Class")) continue;
-                        if (att.Name.ToString().Equals("Flags")) continue;
-                        if (att.Name.ToString().Equals("OccupancyLastTrigger")) continue;
-                        if (att.Name.ToString().Equals("OccupancyTimeTriggered")) continue;
-                        if (att.Name.ToString().Equals("Script")) continue;
-                        if (att.Name.ToString().Equals("BoundObject")) continue;
-                        if (att.Name.ToString().Equals("TargetProperty")) continue;
-                        Task tast = o.AddPropertyAsync(att.Name.ToString(), PremiseProperty.PremiseType.TypeText, true);
-                    }
                 }
+                gdos[1].Trigger = true;
+
             }
             catch (WebException we) {
                 Console.WriteLine("WebException: {0}", we.Message);
@@ -182,6 +185,21 @@ namespace PremiseLib {
             }
             catch (RuntimeBinderException be) {
                 Console.WriteLine("RuntimeBinderException: {0}", be.Message);
+            }
+        }
+
+        private class GarageDoorOpeners : ObservableCollection<dynamic> {
+            public GarageDoorOpeners() : base() {
+                Add(new PremiseObject("sys://Home/Upper Garage/West Garage Door"));
+                Add(new PremiseObject("sys://Home/Upper Garage/Center Garage Door"));
+                Add(new PremiseObject("sys://Home/Upper Garage/East Garage Door"));
+
+                foreach (PremiseObject o in this) {
+                    o.AddPropertyAsync("Name", PremiseProperty.PremiseType.TypeText);
+                    o.AddPropertyAsync("DisplayName", PremiseProperty.PremiseType.TypeText);
+                    o.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
+                    o.AddPropertyAsync("GarageDoorStatus", PremiseProperty.PremiseType.TypeText, true);
+                }
             }
         }
 
