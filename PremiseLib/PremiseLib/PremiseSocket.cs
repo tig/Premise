@@ -3,19 +3,21 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using PremiseLib.Annotations;
 
 namespace PremiseLib {
     public class PremiseSocket : INotifyPropertyChanged, IDisposable {
-
         private TcpClient _client = new TcpClient();
+        private StreamReader _reader = null;
+        private StreamWriter _writer = null;
 
-        public async Task ConnectAsync(string hostName, int port, bool ssl, string username, string password) {
+        public async Task ConnectAsync(string hostName, int port, bool ssl, string username, string password)
+        {
             try {
                 await _client.ConnectAsync(hostName, port);
-                Connected = _client.Connected;
                 _reader = new StreamReader(_client.GetStream());
                 _writer = new StreamWriter(_client.GetStream());
             }
@@ -24,15 +26,6 @@ namespace PremiseLib {
                 throw ex;
             }
         }
-
-        public bool Connected {
-            get { return _client.Connected; }
-
-            private set { OnPropertyChanged(); }
-        }
-
-        private StreamReader _reader = null;
-        private StreamWriter _writer = null;
 
         public async Task<string> ReadLineAsync() {
             try {

@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
@@ -44,7 +43,7 @@ namespace PremiseLib
             public bool Active;
         }
         private Dictionary<int, Subscription> _subscriptions = new Dictionary<int, Subscription>();
-        private PremiseSocket _subscriptionClient = new PremiseSocket();
+        private PremiseSocket _subscriptionClient = null;
 
         #region Delegates
         public delegate void GetPropertyCompletionMethod(DownloadStringCompletedEventArgs e);
@@ -71,10 +70,29 @@ namespace PremiseLib
             set {
                 if (value == _Connected) return;
                 _Connected = value;
-                OnPropertyChanged("Connected");
+                OnPropertyChanged();
             }
         }
 
+        private bool _error = false;
+        public bool Error {
+            get {
+                return _error;
+            }
+
+            set {
+                if (value == _error) return;
+                _error = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string LastStatusCode;
+        public string LastError;
+        public string LastResponsePhrase;
+        public string LastConnection;
+        public string LastErrorContentType;
+        public string LastErrorContent;
 
         private bool _FastMode = false;
         /// <summary>
@@ -104,7 +122,8 @@ namespace PremiseLib
         /// Home DisplayName to start (but ignore any updates).
         /// </summary>
         public async Task StartSubscriptionsAsync(){
-            try{
+            try {
+                _subscriptionClient = new PremiseSocket();
                 await _subscriptionClient.ConnectAsync(Host, Port, SSL, Username, Password);
 
                 // Assign the resulting task to a local variable to get around
@@ -127,6 +146,8 @@ namespace PremiseLib
             }
             catch (Exception ex) {
                 Debug.WriteLine(ex.ToString());
+                Dispose();
+                throw ex;
             }
         }
 
@@ -137,9 +158,8 @@ namespace PremiseLib
         public void StopSubscriptions() {
             foreach (var subscription in _subscriptions) {
                 subscription.Value.Active = false;
-            } 
-            _subscriptionClient.Dispose();
-            _subscriptionClient = null;
+            }
+            Dispose();
         }
 
         /// <summary>
@@ -156,19 +176,23 @@ namespace PremiseLib
 
                 // From here on we will get responses on the stream that
                 // look like HTTP POST responses.
-                while (_subscriptionClient.Connected) {
+                while (_subscriptionClient != null) {
                     var line = _subscriptionClient.ReadLine();
                     Debug.Assert(line != null);
                     Debug.WriteLine(line);
 
-                    if (line.StartsWith("HTTP/1.1 404 ")) {
-                        string error = line.Substring("HTTP/1.1 404 ".Length);
-                        Debug.WriteLine("Error: " + error);
-                        LastStatusCode = "404";
-                        await ParseErrorResponse();
-                        continue;
+                    if (line.StartsWith("HTTP/1.1 ")) {
+                        string statusCode  = line.Substring("HTTP/1.1 ".Length, 3);
+                        LastStatusCode = statusCode;
+                        LastError = line.Substring("HTTP/1.1 ".Length+4);
+                        if (!statusCode.StartsWith("2")) {
+                            Debug.WriteLine("Error: " + line);
+                            await ParseErrorResponse();
+                            Dispose();
+                            Error = true;
+                            break;
+                        }
                     }
-                    LastStatusCode = "200";
 
                     if (line.StartsWith("Target-Element: ")) {
                         string ID = line.Substring("Target-Element: ".Length);
@@ -181,13 +205,13 @@ namespace PremiseLib
                     if (!line.StartsWith("Content-Length: ") ||
                         !int.TryParse(line.Substring("Content-Length: ".Length), out contentLength)) continue;
 
-                    if (!_subscriptionClient.Connected) continue;
+                    if (_subscriptionClient == null) continue;
 
                     // Read the blank line that always follows Content-Length:
                     line = await _subscriptionClient.ReadLineAsync();
                     Debug.WriteLine(line);
 
-                    if (!_subscriptionClient.Connected) continue;
+                    if (_subscriptionClient == null) continue;
 
                     // Read content
                     line = await _subscriptionClient.ReadBlockAsync(contentLength);
@@ -232,51 +256,53 @@ namespace PremiseLib
                 }
             } catch (Exception ex) {
                 Debug.WriteLine("ReadSubscriptionResponse: " + ex.ToString());
+                Dispose();
+                throw ex;
             }
             Debug.WriteLine("Subscription socket closed.");
             Connected = false;
+            Dispose();
         }
-
-
-        public string LastStatusCode;
-        public string LastError;
-        public string LastResponsePhrase;
-        public string LastConnection;
-        public string LastErrorContentType;
-        public string LastErrorContent;
 
         private async Task ParseErrorResponse() {
             try {
-                var line = await _subscriptionClient.ReadLineAsync();
-                Debug.WriteLine(line);
-                while (!line.StartsWith("Content-Length: ")) {
+                int contentLength = 0;
+                while (_subscriptionClient != null)
+                {
+                    var line = await _subscriptionClient.ReadLineAsync();
+                    Debug.Assert(line != null);
+                    Debug.WriteLine(line);
+
                     if (line.StartsWith("Connection: "))
                         LastConnection = line.Substring("Connection: ".Length);
                     if (line.StartsWith("Content-Type: "))
                         LastErrorContentType = line.Substring("Content-Type: ".Length);
                     if (line.StartsWith("Error: "))
                         LastError = line.Substring("Error: ".Length);
+
+                    if (line.StartsWith("Content-Length: ")) {
+                        // Content-Length: is always the last HTTP header Premise sends
+                        if (!int.TryParse(line.Substring("Content-Length: ".Length), out contentLength)) return;
+                    }
+
+                    if (line.Length == 0) {
+                        // The blank line that always preceeds content
+                        //if (_subscriptionClient == null) return;
+                        //line = await _subscriptionClient.ReadLineAsync();
+                        //Debug.Assert(line.Length == 0);
+                        //Debug.WriteLine(line);
+
+                        // Read content
+                        if (_subscriptionClient == null) return;
+                        line = await _subscriptionClient.ReadBlockAsync(contentLength);
+                        LastErrorContent = line;
+                        Debug.WriteLine(line);
+                        return;
+                    }
                 }
-
-                // Content-Length: is always the last HTTP header Premise sends
-                int contentLength;
-                if (!int.TryParse(line.Substring("Content-Length: ".Length), out contentLength)) return;
-
-                if (_subscriptionClient.Connected) return;
-
-                // Read the blank line that always follows Content-Length:
-                line = await _subscriptionClient.ReadLineAsync();
-                Debug.WriteLine(line);
-
-                if (_subscriptionClient.Connected) return;
-
-                // Read content
-                line = await _subscriptionClient.ReadBlockAsync(contentLength);
-                LastErrorContent = line;
-                Debug.WriteLine(line);
-
             }
             catch (Exception ex) {
+                Dispose();
                 throw ex;
             }
         }
@@ -288,7 +314,7 @@ namespace PremiseLib
         /// <param name="propertyName">Name of the property to subscribe.</param>
         public async Task Subscribe(PremiseObject po, string propertyName) {
             try {
-                Debug.Assert(_subscriptionClient.Connected);
+                Debug.Assert(_subscriptionClient != null);
 
                 // Ignore multiple subscripitons
                 foreach (var subscription in _subscriptions) {
@@ -303,6 +329,7 @@ namespace PremiseLib
 
             }
             catch (Exception ex) {
+                Dispose();
                 throw ex;
             }
         }
@@ -326,6 +353,7 @@ namespace PremiseLib
                 sub.Active = true;
             }
             catch (Exception ex) {
+                Dispose();
                 throw ex;
             }
         }
@@ -341,7 +369,7 @@ namespace PremiseLib
                 requestString += "Connection: Keep-Alive\r\n";
                 requestString += "SYSConnector: true\r\n\r\n";
                 // Send the request.
-                Debug.Assert(_subscriptionClient.Connected);
+                Debug.Assert(_subscriptionClient != null);
                 bool b = false;
                 try {
                     b = await _subscriptionClient.WriteStringAsync(requestString);
@@ -351,6 +379,7 @@ namespace PremiseLib
                 return b;
             }
             catch (Exception ex) {
+                Dispose();
                 throw ex;
             }
         }
@@ -373,17 +402,18 @@ namespace PremiseLib
                 Debug.WriteLine("SendRequestFastMode: " + packet);
 
                 // Send the request.
-                Debug.Assert(_subscriptionClient.Connected);
+                Debug.Assert(_subscriptionClient != null);
                 await _subscriptionClient.WriteStringAsync(packet);
             }
             catch (Exception ex) {
+                Dispose();
                 throw ex;
             }
         }
 
         private void EnableFastMode() {
             // /sys/{8D692EC9-EB74-4155-9D83-315872AC9800}?e?FastMode
-            if (!_subscriptionClient.Connected) return;
+            if (_subscriptionClient == null) return;
             Task t = SendRequest("{8D692EC9-EB74-4155-9D83-315872AC9800}?e?FastMode", "True");
         }
 
@@ -410,6 +440,7 @@ namespace PremiseLib
                 }
             }
             catch (Exception ex) {
+                Dispose();
                 throw ex;
             }
         }
@@ -492,7 +523,8 @@ namespace PremiseLib
         #region IDisposable Members
 
         public void Dispose() {
-            _subscriptionClient.Dispose();
+            if (_subscriptionClient != null)
+                _subscriptionClient.Dispose();
             _subscriptionClient = null;
         }
 

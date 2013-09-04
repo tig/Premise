@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.20623.1 VSUPREVIEW
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pr", "pr\pr.csproj", "{00F8A1BC-49F1-4011-BA81-F5C132971DF7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PremiseTests", "PremiseTests\PremiseTests.csproj", "{CA13E2E0-63CC-4903-B7F3-DE32BE7F6550}"

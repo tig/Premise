@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,9 +30,6 @@ namespace PremiseLib {
         private readonly PremiseServer _server = PremiseServer.Instance;
         private static void Main(string[] args) {
             Console.SetOut(new PrDebugWriter());
-            Console.WriteLine("PremiseLib Test App - Copyright © 2013 Kindel Systems");
-            Console.WriteLine("Press Q to quit.");
-
             var options = new Options();
             if (Parser.Default.ParseArguments(args, options)) {
                 if (String.IsNullOrEmpty(options.Username)) {
@@ -42,10 +40,12 @@ namespace PremiseLib {
                     Console.Write("Password: ");
                     options.Password = Console.ReadLine();
                 }
+
+                Console.WriteLine("Press Q to quit.");
                 var pr = new Program();
                 pr.Test(options.Host, options.Port, options.Ssl, options.Username, options.Password);
+                while (Console.ReadKey().Key != ConsoleKey.Q) ;
             }
-            while (Console.ReadKey().Key != ConsoleKey.Q) ;
         }
 
         private static IEnumerable<ConsoleCommand> GetCommands() {
@@ -59,96 +59,101 @@ namespace PremiseLib {
             _server.Password = password;
 
             _server.PropertyChanged += (sender, args) => {
+                if (args.PropertyName == "Error" && _server.Error) {
+                    Console.WriteLine("Error communicating with {0}", _server.Host);
+                    Console.WriteLine("HTTP status code: " + _server.LastStatusCode);
+                    Console.WriteLine("HTTP error: " + _server.LastError);
+                }
                 if (args.PropertyName == "Connected")
-                    Console.WriteLine("Server: {0} = {1}", args.PropertyName, ((PremiseServer) sender).Connected);
+                    Console.WriteLine("{0} {1}", _server.Connected ? "Connected to" : "Disconnected from", _server.Host);
                 if (args.PropertyName == "FastMode")
-                    Console.WriteLine("Server: {0} = {1}", args.PropertyName, ((PremiseServer) sender).FastMode);
+                    Console.WriteLine("FastMode is: {0}", ((PremiseServer) sender).FastMode);
             };
 
             try {
                 Console.WriteLine("Starting Subscriptions on {0}:{1} (SSL is {2})", host, port, ssl);
                 await _server.StartSubscriptionsAsync();
-                _server.FastMode = true;
+                //_server.FastMode = true;
 
-                PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
-                ob.PropertyChanged += (sender, args) => {
-                    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
-                    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
-                };
+                //PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
+                //ob.PropertyChanged += (sender, args) => {
+                //    var val = ((PremiseObject) sender).GetMember(args.PropertyName);
+                //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject) sender).Location, args.PropertyName, val);
+                //};
 
-                await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, false);
-                await ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, false);
+                //await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, false);
+                //await ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, false);
 
-                Thread.Sleep(1000);
-                await _server.Subscribe(ob, "Brightness");
+                //Thread.Sleep(1000);
+                //await _server.Subscribe(ob, "Brightness");
 
-                double d = 0.2;
-                ((dynamic)ob).Brightness = d;
-                 await _server.Unsubscribe(ob, "Brightness");
-                 Thread.Sleep(1);
-                 ((dynamic)ob).Brightness = d = d + .1;
-                 Thread.Sleep(1);
-                 ((dynamic)ob).Brightness = d = d + .1;
-                 Thread.Sleep(1);
-                 ((dynamic)ob).Brightness = d = d + .1;
-                 Thread.Sleep(1);
-                 ((dynamic)ob).Brightness = d = d + .1;
-                 Thread.Sleep(1);
-                 ((dynamic)ob).Brightness = d = d + .1;
-                 Thread.Sleep(1000);
-                 ((dynamic)ob).Brightness = d = d + .1;
-                 Thread.Sleep(1000);
-                 ((dynamic)ob).Brightness = d = d + .1;
+                //double d = 0.2;
+                //((dynamic) ob).Brightness = d;
+                //await _server.Unsubscribe(ob, "Brightness");
+                //Thread.Sleep(1);
+                //((dynamic) ob).Brightness = d = d + .1;
+                //Thread.Sleep(1);
+                //((dynamic) ob).Brightness = d = d + .1;
+                //Thread.Sleep(1);
+                //((dynamic) ob).Brightness = d = d + .1;
+                //Thread.Sleep(1);
+                //((dynamic) ob).Brightness = d = d + .1;
+                //Thread.Sleep(1);
+                //((dynamic) ob).Brightness = d = d + .1;
+                //Thread.Sleep(1000);
+                //((dynamic) ob).Brightness = d = d + .1;
+                //Thread.Sleep(1000);
+                //((dynamic) ob).Brightness = d = d + .1;
 
-                 Thread.Sleep(5000);
-                 await _server.Subscribe(ob, "Brightness");
+                //Thread.Sleep(5000);
+                //await _server.Subscribe(ob, "Brightness");
 
-                 ((dynamic)ob).Brightness = "33%";
-                 ((dynamic)ob).Brightness = ((dynamic)ob).Brightness + .25;
+                //((dynamic) ob).Brightness = "33%";
+                //((dynamic) ob).Brightness = ((dynamic) ob).Brightness + .25;
 
-                 //PremiseObject motion = new PremiseObject("sys://Home/Downstairs/Office/Motion Detector");
-                 //motion.PropertyChanged += (sender, args) => {
-                 //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
-                 //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
-                 //};
+                //PremiseObject motion = new PremiseObject("sys://Home/Downstairs/Office/Motion Detector");
+                //motion.PropertyChanged += (sender, args) => {
+                //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                //};
 
-                 //await motion.AddPropertiesAsync();
-                 //await motion.AddPropertyAsync("MotionDetected", subscribe: true);
-                 //await motion.AddPropertyAsync("LastTimeTriggered", PremiseProperty.PremiseType.TypeDateTime, subscribe: true);
+                //await motion.AddPropertiesAsync();
+                //await motion.AddPropertyAsync("MotionDetected", subscribe: true);
+                //await motion.AddPropertyAsync("LastTimeTriggered", PremiseProperty.PremiseType.TypeDateTime, subscribe: true);
 
-                 //Console.WriteLine("{0:F}", ((dynamic)motion).LastTimeTriggered);
+                //Console.WriteLine("{0:F}", ((dynamic)motion).LastTimeTriggered);
 
-                 ////sys://Home/Admin/EqupTemp_VoltageSensor
-                 //PremiseObject voltage = await WatchObjectAsync("sys://Home/Admin/EqupTemp_VoltageSensor",
-                 //                                              new PremiseProperty("Name",
-                 //                                                                  PremiseProperty.PremiseType.TypeText),
-                 //                                              new PremiseProperty("Voltage",
-                 //                                                                  PremiseProperty.PremiseType.TypeFloat));
-                 //voltage.PropertyChanged += (sender, args) => {
-                 //    //((dynamic)ob).Brightness = ((dynamic)voltage).Voltage / 2;
-                 //    //((dynamic)office).Occupancy = !((dynamic)office).Occupancy;
-                 //};
-                 //string result = await _server.InvokeMethodTaskAsync("{A2214A6E-1A22-4A67-AEC7-CDB863C316BB}", "GetButtons()");
-                 //foreach (string s in result.Split(',')) {
-                 //    await WatchObjectAsync(s,
-                 //        new PremiseProperty("Status", PremiseProperty.PremiseType.TypeBoolean),
-                 //        new PremiseProperty("Trigger", PremiseProperty.PremiseType.TypeBoolean));
-                 //}
+                ////sys://Home/Admin/EqupTemp_VoltageSensor
+                //PremiseObject voltage = await WatchObjectAsync("sys://Home/Admin/EqupTemp_VoltageSensor",
+                //                                              new PremiseProperty("Name",
+                //                                                                  PremiseProperty.PremiseType.TypeText),
+                //                                              new PremiseProperty("Voltage",
+                //                                                                  PremiseProperty.PremiseType.TypeFloat));
+                //voltage.PropertyChanged += (sender, args) => {
+                //    //((dynamic)ob).Brightness = ((dynamic)voltage).Voltage / 2;
+                //    //((dynamic)office).Occupancy = !((dynamic)office).Occupancy;
+                //};
+                //string result = await _server.InvokeMethodTaskAsync("{A2214A6E-1A22-4A67-AEC7-CDB863C316BB}", "GetButtons()");
+                //foreach (string s in result.Split(',')) {
+                //    await WatchObjectAsync(s,
+                //        new PremiseProperty("Status", PremiseProperty.PremiseType.TypeBoolean),
+                //        new PremiseProperty("Trigger", PremiseProperty.PremiseType.TypeBoolean));
+                //}
 
 
-                 //XmlDocument doc = new XmlDocument();
-                 //doc.LoadXml(((dynamic)office)._xml);
-                 //XmlNodeList nodes = doc.SelectNodes("//Object");
-                 //foreach (XmlElement n in nodes) {
-                 //    Console.WriteLine("{0} {1}", n.Attributes["ID"].Value, n.Attributes["Name"].Value);
-                 //}
+                //XmlDocument doc = new XmlDocument();
+                //doc.LoadXml(((dynamic)office)._xml);
+                //XmlNodeList nodes = doc.SelectNodes("//Object");
+                //foreach (XmlElement n in nodes) {
+                //    Console.WriteLine("{0} {1}", n.Attributes["ID"].Value, n.Attributes["Name"].Value);
+                //}
 
-                 //// This can take a while with a lot of objects
-                 //var home = new PremiseObject("sys://Home/Downstairs");
-                 //home.PropertyChanged += (sender, args) => {
-                 //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
-                 //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
-                 //};
+                //// This can take a while with a lot of objects
+                //var home = new PremiseObject("sys://Home/Downstairs");
+                //home.PropertyChanged += (sender, args) => {
+                //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                //};
 
                 //await home.AddPropertyAsync("_xml", PremiseProperty.PremiseType.TypeText, true);
 
@@ -195,6 +200,13 @@ namespace PremiseLib {
                 //gdos[1].Trigger = false;
 
             }
+            catch (System.Net.Sockets.SocketException socketException) {
+                Console.WriteLine("SocketException: {0}", socketException.Message);
+            }
+            catch (System.Net.Http.HttpRequestException httpRequestException) {
+                Console.WriteLine("HttpRequestException: {0} {1}", httpRequestException.Message, 
+                    httpRequestException.InnerException == null ? "" :httpRequestException.InnerException.Message);
+            }
             catch (WebException we) {
                 Console.WriteLine("WebException: {0}", we.Message);
                 var rdr = new StreamReader(we.Response.GetResponseStream());
@@ -239,7 +251,7 @@ namespace PremiseLib {
                 HelpText = "Premise server hostname or IP address.")]
             public string Host { get; set; }
 
-            [Option('p', "port", Required = true, DefaultValue = 86, HelpText = "Port Premise server is listening on.")]
+            [Option('p', "port", Required = true, DefaultValue = 80, HelpText = "Port Premise server is listening on.")]
             public int Port { get; set; }
 
             [Option('s', "ssl", Required = false, DefaultValue = false, HelpText = "Use SSL?")]
@@ -256,8 +268,15 @@ namespace PremiseLib {
 
             [HelpOption]
             public string GetUsage() {
-                return HelpText.AutoBuild(this,
-                                          (HelpText current) => HelpText.DefaultParsingErrorsHandler(this, current));
+                var help = new HelpText
+                {
+                    Heading = new HeadingInfo("PremiseLib Test App", "1.0"),
+                    Copyright = new CopyrightInfo("Kindel Systems", 2013),
+                    AdditionalNewLineAfterOption = true,
+                    AddDashesToOption = true
+                };
+                help.AddOptions(this);
+                return help; 
             }
         }
 
