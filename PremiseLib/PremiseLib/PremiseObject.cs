@@ -46,11 +46,17 @@ namespace PremiseLib {
         public async Task AddPropertyAsync(string propertyName,
                                            PremiseProperty.PremiseType type = PremiseProperty.PremiseType.TypeText,
                                            bool subscribe = false) {
-            _properties[propertyName] = new PremiseProperty(propertyName, type);
-            Console.WriteLine("getting {0} {1}", Location, propertyName);
-            SetMember(propertyName, await PremiseServer.Instance.GetValueTaskAsync(Location, propertyName), true);
-            if (subscribe)
-                PremiseServer.Instance.Subscribe(this, propertyName);
+            try {
+                _properties[propertyName] = new PremiseProperty(propertyName, type);
+                Console.WriteLine("getting {0} {1}", Location, propertyName);
+                SetMember(propertyName, await PremiseServer.Instance.GetValueTaskAsync(Location, propertyName), true);
+                if (subscribe)
+                    // Do we really want to await here?
+                    await PremiseServer.Instance.Subscribe(this, propertyName);
+            }
+            catch (Exception ex) {
+                throw ex;
+            }
         }
 
         public override bool TryGetMember(GetMemberBinder binder, out object result) {

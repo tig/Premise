@@ -1,6 +1,6 @@
 ﻿// Copyright 2013 Kindel Systems
 //   
-//   
+//   This is the WinRT Version of PremiseServer
 
 using System;
 using System.Collections.Generic;
@@ -414,8 +414,7 @@ namespace PremiseLib
             Debug.Assert(_socketOpen);
             bool b = false;
             try {
-                if (_writer.WriteString(requestString) != requestString.Length)
-                    Debug.WriteLine("Error writing to OutputStream");
+                _writer.WriteString(requestString);
                 await _writer.StoreAsync();
                 b = await _writer.FlushAsync();
             }
@@ -463,10 +462,9 @@ namespace PremiseLib
             foreach (var subscription in _subscriptions) {
                 if (subscription.Value.PropertyName == propertyName &&
                     subscription.Value.Object.Location == po.Location) {
-                    HttpClient webclient = new HttpClient( new HttpClientHandler() { Credentials = new NetworkCredential(Username, Password) });
-                    var uri = new Uri(GetUrlFromSysUri(po.Location) + "?c?" + subscription.GetHashCode());
-                    Debug.WriteLine("Unsubscribe: " + uri);
-                    webclient.PostAsync(uri, null);
+                    string command = po.Location + "?c?" + subscription.GetHashCode();
+                    Debug.WriteLine("Unsubscribe: " + command);
+                    Task t = SendRequest(command);
                 }
             }
         }

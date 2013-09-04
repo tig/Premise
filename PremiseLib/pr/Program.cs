@@ -13,7 +13,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using CommandLine;
 using CommandLine.Text;
@@ -68,68 +70,85 @@ namespace PremiseLib {
                 await _server.StartSubscriptionsAsync();
                 _server.FastMode = true;
 
-                //PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
-                //ob.PropertyChanged += (sender, args) => {
-                //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
-                //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
-                //};
+                PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
+                ob.PropertyChanged += (sender, args) => {
+                    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                };
 
-                //await ob.AddPropertiesAsync();
-                //await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
-                ////await ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, true);
+                await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, false);
+                await ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, false);
 
-                //((dynamic) ob).Brightness = ((dynamic) ob).Brightness - .15;
-                ////await ob.AddPropertyAsync("Flags", PremiseProperty.PremiseType.TypeText, true);
-                //ob.AddPropertyAsync("_xml", PremiseProperty.PremiseType.TypeText, true);
+                Thread.Sleep(1000);
+                await _server.Subscribe(ob, "Brightness");
 
-                //((dynamic)ob).Brightness = "33%";
-                //((dynamic)ob).Brightness = ((dynamic)ob).Brightness + .25;
+                double d = 0.2;
+                ((dynamic)ob).Brightness = d;
+                 await _server.Unsubscribe(ob, "Brightness");
+                 Thread.Sleep(1);
+                 ((dynamic)ob).Brightness = d = d + .1;
+                 Thread.Sleep(1);
+                 ((dynamic)ob).Brightness = d = d + .1;
+                 Thread.Sleep(1);
+                 ((dynamic)ob).Brightness = d = d + .1;
+                 Thread.Sleep(1);
+                 ((dynamic)ob).Brightness = d = d + .1;
+                 Thread.Sleep(1);
+                 ((dynamic)ob).Brightness = d = d + .1;
+                 Thread.Sleep(1000);
+                 ((dynamic)ob).Brightness = d = d + .1;
+                 Thread.Sleep(1000);
+                 ((dynamic)ob).Brightness = d = d + .1;
 
-                //PremiseObject motion = new PremiseObject("sys://Home/Downstairs/Office/Motion Detector");
-                //motion.PropertyChanged += (sender, args) =>
-                //{
-                //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
-                //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
-                //};
+                 Thread.Sleep(5000);
+                 await _server.Subscribe(ob, "Brightness");
 
-                //await motion.AddPropertiesAsync();
-                //await motion.AddPropertyAsync("MotionDetected", subscribe: true);
-                //await motion.AddPropertyAsync("LastTimeTriggered", PremiseProperty.PremiseType.TypeDateTime, subscribe: true);
+                 ((dynamic)ob).Brightness = "33%";
+                 ((dynamic)ob).Brightness = ((dynamic)ob).Brightness + .25;
 
-                //Console.WriteLine("{0:F}", ((dynamic)motion).LastTimeTriggered);
+                 //PremiseObject motion = new PremiseObject("sys://Home/Downstairs/Office/Motion Detector");
+                 //motion.PropertyChanged += (sender, args) => {
+                 //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                 //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                 //};
 
-                // sys://Home/Admin/EqupTemp_VoltageSensor
-                //PremiseObject voltage = await WatchObjectAsync("sys://Home/Admin/EqupTemp_VoltageSensor",
-                //                                              new PremiseProperty("Name",
-                //                                                                  PremiseProperty.PremiseType.TypeText),
-                //                                              new PremiseProperty("Voltage",
-                //                                                                  PremiseProperty.PremiseType.TypeFloat));
-                //voltage.PropertyChanged += (sender, args) =>
-                //{
-                //    //((dynamic)ob).Brightness = ((dynamic)voltage).Voltage / 2;
-                //    ((dynamic) office).Occupancy = !((dynamic) office).Occupancy;
-                //};
-                //string result = await _server.InvokeMethodTaskAsync("{A2214A6E-1A22-4A67-AEC7-CDB863C316BB}", "GetButtons()");
-                //foreach (string s in result.Split(',')) {
-                //    await WatchObjectAsync(s,
-                //        new PremiseProperty("Status",  PremiseProperty.PremiseType.TypeBoolean),
-                //        new PremiseProperty("Trigger", PremiseProperty.PremiseType.TypeBoolean));
-                //}
+                 //await motion.AddPropertiesAsync();
+                 //await motion.AddPropertyAsync("MotionDetected", subscribe: true);
+                 //await motion.AddPropertyAsync("LastTimeTriggered", PremiseProperty.PremiseType.TypeDateTime, subscribe: true);
+
+                 //Console.WriteLine("{0:F}", ((dynamic)motion).LastTimeTriggered);
+
+                 ////sys://Home/Admin/EqupTemp_VoltageSensor
+                 //PremiseObject voltage = await WatchObjectAsync("sys://Home/Admin/EqupTemp_VoltageSensor",
+                 //                                              new PremiseProperty("Name",
+                 //                                                                  PremiseProperty.PremiseType.TypeText),
+                 //                                              new PremiseProperty("Voltage",
+                 //                                                                  PremiseProperty.PremiseType.TypeFloat));
+                 //voltage.PropertyChanged += (sender, args) => {
+                 //    //((dynamic)ob).Brightness = ((dynamic)voltage).Voltage / 2;
+                 //    //((dynamic)office).Occupancy = !((dynamic)office).Occupancy;
+                 //};
+                 //string result = await _server.InvokeMethodTaskAsync("{A2214A6E-1A22-4A67-AEC7-CDB863C316BB}", "GetButtons()");
+                 //foreach (string s in result.Split(',')) {
+                 //    await WatchObjectAsync(s,
+                 //        new PremiseProperty("Status", PremiseProperty.PremiseType.TypeBoolean),
+                 //        new PremiseProperty("Trigger", PremiseProperty.PremiseType.TypeBoolean));
+                 //}
 
 
-                //XmlDocument doc = new XmlDocument();
-                //doc.LoadXml(((dynamic)office)._xml);
-                //XmlNodeList nodes = doc.SelectNodes("//Object");
-                //foreach (XmlElement n in nodes) {
-                //    Console.WriteLine("{0} {1}", n.Attributes["ID"].Value, n.Attributes["Name"].Value);
-                //}
+                 //XmlDocument doc = new XmlDocument();
+                 //doc.LoadXml(((dynamic)office)._xml);
+                 //XmlNodeList nodes = doc.SelectNodes("//Object");
+                 //foreach (XmlElement n in nodes) {
+                 //    Console.WriteLine("{0} {1}", n.Attributes["ID"].Value, n.Attributes["Name"].Value);
+                 //}
 
-                //// This can take a while with a lot of objects
-                //var home = new PremiseObject("sys://Home/Downstairs");
-                //home.PropertyChanged += (sender, args) => {
-                //    var val = ((PremiseObject) sender).GetMember(args.PropertyName);
-                //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject) sender).Location, args.PropertyName, val);
-                //};
+                 //// This can take a while with a lot of objects
+                 //var home = new PremiseObject("sys://Home/Downstairs");
+                 //home.PropertyChanged += (sender, args) => {
+                 //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+                 //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                 //};
 
                 //await home.AddPropertyAsync("_xml", PremiseProperty.PremiseType.TypeText, true);
 
@@ -164,16 +183,16 @@ namespace PremiseLib {
                 //    }
                 //}
 
-                GarageDoorOpeners gdos = new GarageDoorOpeners();
-                foreach (PremiseObject garageDoorOpener in gdos) {
-                    garageDoorOpener.PropertyChanged += (sender, args) => {
-                        Console.WriteLine("{0}: {1} = {2}", 
-                            ((PremiseObject)sender).Location, 
-                            args.PropertyName, 
-                            ((PremiseObject)sender).GetMember(args.PropertyName));
-                    };
-                }
-                gdos[1].Trigger = true;
+                //GarageDoorOpeners gdos = new GarageDoorOpeners();
+                //foreach (PremiseObject garageDoorOpener in gdos) {
+                //    garageDoorOpener.PropertyChanged += (sender, args) => {
+                //        Console.WriteLine("{0}: {1} = {2}", 
+                //            ((PremiseObject)sender).Location, 
+                //            args.PropertyName, 
+                //            ((PremiseObject)sender).GetMember(args.PropertyName));
+                //    };
+                //}
+                //gdos[1].Trigger = false;
 
             }
             catch (WebException we) {
