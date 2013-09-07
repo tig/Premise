@@ -73,42 +73,42 @@ namespace PremiseLib {
             try {
                 Console.WriteLine("Starting Subscriptions on {0}:{1} (SSL is {2})", host, port, ssl);
                 await _server.StartSubscriptionsAsync();
-                //_server.FastMode = true;
+                _server.FastMode = true;
 
-                //PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
-                //ob.PropertyChanged += (sender, args) => {
-                //    var val = ((PremiseObject) sender).GetMember(args.PropertyName);
-                //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject) sender).Location, args.PropertyName, val);
-                //};
+                PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
+                ob.PropertyChanged += (sender, args) => {
+                    var val = ((PremiseObject)sender)[args.PropertyName];
+                    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                };
 
-                //await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, false);
-                //await ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, false);
+                await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, false);
+                await ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, false);
 
-                //Thread.Sleep(1000);
-                //await _server.Subscribe(ob, "Brightness");
+                Thread.Sleep(1000);
+                await _server.Subscribe(ob, "Brightness");
 
-                //double d = 0.2;
-                //((dynamic) ob).Brightness = d;
-                //await _server.Unsubscribe(ob, "Brightness");
-                //Thread.Sleep(1);
-                //((dynamic) ob).Brightness = d = d + .1;
-                //Thread.Sleep(1);
-                //((dynamic) ob).Brightness = d = d + .1;
-                //Thread.Sleep(1);
-                //((dynamic) ob).Brightness = d = d + .1;
-                //Thread.Sleep(1);
-                //((dynamic) ob).Brightness = d = d + .1;
-                //Thread.Sleep(1);
-                //((dynamic) ob).Brightness = d = d + .1;
-                //Thread.Sleep(1000);
-                //((dynamic) ob).Brightness = d = d + .1;
-                //Thread.Sleep(1000);
-                //((dynamic) ob).Brightness = d = d + .1;
+                double d = 0.2;
+                ob["Brightness"] = d;
+                await _server.Unsubscribe(ob, "Brightness");
+                Thread.Sleep(1);
+                ob["Brightness"] = d = d + .1;
+                Thread.Sleep(1);
+                ob["Brightness"] = d = d + .1;
+                Thread.Sleep(1);
+                ob["Brightness"] = d = d + .1;
+                Thread.Sleep(1);
+                ob["Brightness"] = d = d + .1;
+                Thread.Sleep(1);
+                ob["Brightness"] = d = d + .1;
+                Thread.Sleep(1000);
+                ob["Brightness"] = d = d + .1;
+                Thread.Sleep(1000);
+                ob["Brightness"] = d = d + .1;
 
-                //Thread.Sleep(5000);
-                //await _server.Subscribe(ob, "Brightness");
+                Thread.Sleep(2000);
+                await _server.Subscribe(ob, "Brightness");
 
-                //((dynamic) ob).Brightness = "33%";
+                ob["Brightness"] = "33%";
                 //((dynamic) ob).Brightness = ((dynamic) ob).Brightness + .25;
 
                 //PremiseObject motion = new PremiseObject("sys://Home/Downstairs/Office/Motion Detector");
@@ -130,7 +130,7 @@ namespace PremiseLib {
                 //                                              new PremiseProperty("Voltage",
                 //                                                                  PremiseProperty.PremiseType.TypeFloat));
                 //voltage.PropertyChanged += (sender, args) => {
-                //    //((dynamic)ob).Brightness = ((dynamic)voltage).Voltage / 2;
+                //    //ob["Brightness = ((dynamic)voltage).Voltage / 2;
                 //    //((dynamic)office).Occupancy = !((dynamic)office).Occupancy;
                 //};
                 //string result = await _server.InvokeMethodTaskAsync("{A2214A6E-1A22-4A67-AEC7-CDB863C316BB}", "GetButtons()");
@@ -238,7 +238,7 @@ namespace PremiseLib {
         public async Task<PremiseObject> WatchObjectAsync(string location, params PremiseProperty[] properties) {
             var o = new PremiseObject(location);
             o.PropertyChanged += (sender, args) => {
-                var val = ((PremiseObject) sender).GetMember(args.PropertyName);
+                var val = ((PremiseObject) sender)[args.PropertyName];
                 Console.WriteLine("{0}: {1} = {2}", ((PremiseObject) sender).Location, args.PropertyName, val);
             };
 

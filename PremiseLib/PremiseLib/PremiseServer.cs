@@ -12,8 +12,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using PremiseLib.Annotations;
 
-namespace PremiseLib
-{
+namespace PremiseLib {
     /// <summary>
     /// PremiseServer represents a Premise Server. It is a singleton class
     /// and thus only supports connection to a single server.
@@ -21,11 +20,11 @@ namespace PremiseLib
     /// PremiseServer implements support for the Premise WebClient protocol
     /// spoken by the SYSConnector ActiveX control.
     /// </summary>
-    public sealed class PremiseServer : IDisposable, INotifyPropertyChanged {
+    public sealed class PremiseServer : PremiseServerBase, IDisposable {
         // Singleton pattern (pattern #4) from John Skeet: 
         // http://csharpindepth.com/Articles/General/Singleton.aspx
         static PremiseServer() { }
-        public static PremiseServer Instance{
+        public static PremiseServer Instance {
             get { return instance; }
         }
         private static readonly PremiseServer instance = new PremiseServer();
@@ -44,12 +43,6 @@ namespace PremiseLib
         }
         private Dictionary<int, Subscription> _subscriptions = new Dictionary<int, Subscription>();
         private PremiseSocket _subscriptionClient = null;
-
-        #region Delegates
-        public delegate void GetPropertyCompletionMethod(DownloadStringCompletedEventArgs e);
-        #endregion
-
-        private const Int32 TIMER_REQUERY_INTERVAL = 200; // 200 miliseconds
 
         public string Host, Username, Password;
         public int Port;
@@ -102,8 +95,7 @@ namespace PremiseLib
         /// subscription connection and re-open it to disable
         /// FastMode.
         /// </summary>
-        public bool FastMode
-        {
+        public bool FastMode {
             get {
                 return _FastMode;
             }
@@ -121,7 +113,7 @@ namespace PremiseLib
         /// This starts the subscription engine. We always create one subscription for
         /// Home DisplayName to start (but ignore any updates).
         /// </summary>
-        public async Task StartSubscriptionsAsync(){
+        public async Task StartSubscriptionsAsync() {
             try {
                 _subscriptionClient = new PremiseSocket();
                 await _subscriptionClient.ConnectAsync(Host, Port, SSL, Username, Password);
@@ -139,12 +131,10 @@ namespace PremiseLib
                     foreach (var subscription in _subscriptions) {
                         Task t = SendSubscriptionRequest(subscription.Value);
                     }
-                }
-                else {
+                } else {
                     Debug.WriteLine("SendRequest returned false");
                 }
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 Debug.WriteLine(ex.ToString());
                 Dispose();
                 throw ex;
@@ -177,14 +167,14 @@ namespace PremiseLib
                 // From here on we will get responses on the stream that
                 // look like HTTP POST responses.
                 while (_subscriptionClient != null) {
-                    var line = _subscriptionClient.ReadLine();
+                    var line = await _subscriptionClient.ReadLineAsync();
                     Debug.Assert(line != null);
                     Debug.WriteLine(line);
 
                     if (line.StartsWith("HTTP/1.1 ")) {
-                        string statusCode  = line.Substring("HTTP/1.1 ".Length, 3);
+                        string statusCode = line.Substring("HTTP/1.1 ".Length, 3);
                         LastStatusCode = statusCode;
-                        LastError = line.Substring("HTTP/1.1 ".Length+4);
+                        LastError = line.Substring("HTTP/1.1 ".Length + 4);
                         if (!statusCode.StartsWith("2")) {
                             Debug.WriteLine("Error: " + line);
                             await ParseErrorResponse();
@@ -230,27 +220,27 @@ namespace PremiseLib
                     // enforce this limit. 
                     switch (line) {
                         case "pauseConnection":
-                            Debug.WriteLine(line);
-                            foreach (var subscription in _subscriptions) {
-                                subscription.Value.Active = false;
-                            }
+                        Debug.WriteLine(line);
+                        foreach (var subscription in _subscriptions) {
+                            subscription.Value.Active = false;
+                        }
                         break;
                         case "resumeConnection":
-                            Debug.WriteLine(line);
-                            foreach (var subscription in _subscriptions) {
-                                Task t = SendSubscriptionRequest(subscription.Value);
+                        Debug.WriteLine(line);
+                        foreach (var subscription in _subscriptions) {
+                            Task t = SendSubscriptionRequest(subscription.Value);
                         }
                         break;
                         case "fastMode":
-                            FastMode = true;
-                            Debug.WriteLine(line);
+                        FastMode = true;
+                        Debug.WriteLine(line);
                         break;
                         default:
-                            // We got content!
-                            // Find the property this response belongs to and update it
-                            Subscription sub = null;
-                            if (_subscriptions.TryGetValue(hashCode, out sub))
-                                sub.Object.SetMember(sub.PropertyName, line, true);
+                        // We got content!
+                        // Find the property this response belongs to and update it
+                        Subscription sub = null;
+                        if (_subscriptions.TryGetValue(hashCode, out sub))
+                            DispatchSetMember(sub.Object, sub.PropertyName, line);
                         break;
                     }
                 }
@@ -267,8 +257,7 @@ namespace PremiseLib
         private async Task ParseErrorResponse() {
             try {
                 int contentLength = 0;
-                while (_subscriptionClient != null)
-                {
+                while (_subscriptionClient != null) {
                     var line = await _subscriptionClient.ReadLineAsync();
                     Debug.Assert(line != null);
                     Debug.WriteLine(line);
@@ -300,8 +289,7 @@ namespace PremiseLib
                         return;
                     }
                 }
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -327,8 +315,7 @@ namespace PremiseLib
                 _subscriptions.Add(sub.GetHashCode(), sub);
                 await SendSubscriptionRequest(sub);
 
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -351,8 +338,7 @@ namespace PremiseLib
                     await SendRequest(command, "");
                 }
                 sub.Active = true;
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -377,8 +363,7 @@ namespace PremiseLib
                     Debug.WriteLine(ex.ToString());
                 }
                 return b;
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -404,8 +389,7 @@ namespace PremiseLib
                 // Send the request.
                 Debug.Assert(_subscriptionClient != null);
                 await _subscriptionClient.WriteStringAsync(packet);
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -438,8 +422,7 @@ namespace PremiseLib
                         return;
                     }
                 }
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -529,13 +512,5 @@ namespace PremiseLib
         }
 
         #endregion
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        [NotifyPropertyChangedInvocator]
-        private void OnPropertyChanged([CallerMemberName] string propertyName = null) {
-            PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
-        }
     }
 }

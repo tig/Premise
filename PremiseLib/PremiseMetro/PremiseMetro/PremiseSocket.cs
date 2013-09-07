@@ -17,10 +17,10 @@ using Windows.Storage.Streams;
 
 namespace PremiseLib {
     public class PremiseSocket : INotifyPropertyChanged, IDisposable {
-
         private StreamSocket _client = new StreamSocket();
         private DataReader _reader;
         private DataWriter _writer;
+
         private byte[] _subscriptionBuffer = null;
         private StringBuilder _currentLine = new StringBuilder();
         private int _currentLocation = 0;

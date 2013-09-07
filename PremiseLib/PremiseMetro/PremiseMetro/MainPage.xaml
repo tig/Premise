@@ -14,9 +14,9 @@
                 <DataTemplate >
                     <Grid Margin="6">
                         <StackPanel Orientation="Horizontal" >
-                            <TextBlock Text="{Binding Path=DisplayName}" Margin="5" />
-                            <TextBlock Text="{Binding Path=PowerState}" Margin="5" />
-                            <TextBlock Text="{Binding Path=Brightness}" Margin="5" />
+                            <TextBlock Text="{Binding [Description]}" Margin="5" />
+                            <TextBlock Text="{Binding [PowerState]}" Margin="5" />
+                            <TextBlock Text="{Binding [Brightness]}" Margin="5" />
                         </StackPanel>
                     </Grid>
                 </DataTemplate>

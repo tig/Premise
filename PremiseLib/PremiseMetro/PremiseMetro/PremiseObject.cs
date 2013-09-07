@@ -9,16 +9,13 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using GalaSoft.MvvmLight.Threading;
 using Microsoft.CSharp.RuntimeBinder;
-using Windows.ApplicationModel.Core;
-using Windows.UI.Core;
 
 namespace PremiseLib {
     /// <summary>
     ///     A local representation of an object on the Premise server.
     /// </summary>
-    public class PremiseObject : DynamicObject, INotifyPropertyChanged {
+    public class PremiseObject : INotifyPropertyChanged {
         private readonly Dictionary<string, PremiseProperty> _properties = new Dictionary<string, PremiseProperty>();
         public String Location;
 
@@ -50,93 +47,123 @@ namespace PremiseLib {
         public async Task AddPropertyAsync(string propertyName,
                                            PremiseProperty.PremiseType type = PremiseProperty.PremiseType.TypeText,
                                            bool subscribe = false) {
-            _properties[propertyName] = new PremiseProperty(propertyName, type);
-            Debug.WriteLine(String.Format("getting {0} {1}", Location, propertyName));
-            SetMember(propertyName, await PremiseServer.Instance.GetValueTaskAsync(Location, propertyName), true);
-            if (subscribe)
-                PremiseServer.Instance.Subscribe(this, propertyName);
-        }
-
-        public override bool TryGetMember(GetMemberBinder binder, out object result) {
-            string name = binder.Name;
-            result = null;
-            // If the property name is found in a dictionary, 
-            // set the result parameter to the property value and return true. 
-            // Otherwise, return false. 
-            PremiseProperty prop;
-            if (_properties.TryGetValue(name, out prop)) {
-                result = prop.Value;
-                return true;
+            try {
+                _properties[propertyName] = new PremiseProperty(propertyName, type);
+                Debug.WriteLine("getting {0} {1}", Location, propertyName);
+                this.SetMember(propertyName, await PremiseServer.Instance.GetValueTaskAsync(Location, propertyName), false);
+                if (subscribe)
+                    // Do we really want to await here?
+                    await PremiseServer.Instance.Subscribe(this, propertyName);
+            } catch (Exception ex) {
+                throw ex;
             }
-            return false;
         }
 
-        // If you try to set a value of a property that is 
-        // not defined in the class, this method is called. 
-        public override bool TrySetMember(SetMemberBinder binder, object value) {
-            string name = binder.Name;
+        public object this[string name] {
+            get {
+                PremiseProperty prop;
+                if (_properties.TryGetValue(name, out prop))
+                    return prop.Value;
+                return null;
+            }
+            set {
+                SetMember(name, value);
+            }
+        }
 
+        public void SetMember(String propertyName, object value, bool fromUI = true) {
             PremiseProperty current = null;
-            // If this is a new property, add it to the dictionary and assume it's text
-            if (!_properties.TryGetValue(name, out current)) {
-                current = new PremiseProperty(name, PremiseProperty.PremiseType.TypeText);
+            if (!_properties.TryGetValue(propertyName, out current)) {
+                current = new PremiseProperty(propertyName, PremiseProperty.PremiseType.TypeText);
             }
             // Only update value if it changed
-            if (current.Value == value) return true;
+            if (current.Value == value) return;
 
-            bool fromServer = (current.Value == null);
             current.Value = value;
-            _properties[name] = current;
-            if (value != null && !fromServer) {
-                Debug.WriteLine(String.Format("Updating server: {0}: {1}", name, value));
-                SendPropertyChangeToServer(name, value);
+            _properties[propertyName] = current;
+            OnPropertyChanged(propertyName);
+            if (fromUI) {
+                Debug.WriteLine("Updating server: {0}: {1}", propertyName, value);
+                SendPropertyChangeToServer(propertyName, value);
             }
-            if (CoreApplication.MainView.CoreWindow.Dispatcher.HasThreadAccess)
-                OnPropertyChanged(name);
-            else
-                CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                    CoreDispatcherPriority.Normal, () => OnPropertyChanged(name));
-
-            // You can always add a value to a dictionary, 
-            // so this method always returns true. 
-            return true;
         }
 
-        public object GetMember(string propName) {
-            var binder = Binder.GetMember(CSharpBinderFlags.None,
-                                          propName, GetType(),
-                                          new List<CSharpArgumentInfo> {
-                                              CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
-                                          });
-            var callsite = CallSite<Func<CallSite, object, object>>.Create(binder);
+        //public override bool TryGetMember(GetMemberBinder binder, out object result) {
+        //    string name = binder.Name;
+        //    result = null;
+        //    // If the property name is found in a dictionary, 
+        //    // set the result parameter to the property value and return true. 
+        //    // Otherwise, return false. 
+        //    PremiseProperty prop;
+        //    if (_properties.TryGetValue(name, out prop)) {
+        //        result = prop.Value;
+        //        return true;
+        //    }
+        //    return false;
+        //}
 
-            return callsite.Target(callsite, this);
-        }
+        //// If you try to set a value of a property that is 
+        //// not defined in the class, this method is called. 
+        //public override bool TrySetMember(SetMemberBinder binder, object value) {
+        //    string name = binder.Name;
 
-        /// <summary>
-        ///     Sets the value of a property.
-        /// </summary>
-        /// <param name="propertyName">Name of property</param>
-        /// <param name="val">New value</param>
-        /// <param name="fromServer">If true, will not try to update server.</param>
-        public void SetMember(String propertyName, object val, bool fromServer = false) {
-            //Console.WriteLine("SetMember fromServer = {0}: {1} = {2}", fromServer, propertyName, val);
-            if (fromServer)
-                _properties[propertyName].Value = null; // this prevents sending back to server
+        //    PremiseProperty current = null;
+        //    // If this is a new property, add it to the dictionary and assume it's text
+        //    if (!_properties.TryGetValue(name, out current)) {
+        //        current = new PremiseProperty(name, PremiseProperty.PremiseType.TypeText);
+        //    }
+        //    // Only update value if it changed
+        //    if (current.Value == value) return true;
 
-            var binder = Binder.SetMember(CSharpBinderFlags.None,
-                                          propertyName, GetType(),
-                                          new List<CSharpArgumentInfo> {
-                                              CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null),
-                                              CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
-                                          });
-            var callsite = CallSite<Func<CallSite, object, object, object>>.Create(binder);
+        //    bool fromServer = (current.Value == null);
+        //    current.Value = value;
+        //    _properties[name] = current;
+        //    if (value != null && !fromServer) {
+        //        Console.WriteLine("Updating server: {0}: {1}", name, value);
+        //        SendPropertyChangeToServer(name, value);
+        //    }
+        //    OnPropertyChanged(name);
 
-            callsite.Target(callsite, this, val);
-        }
+        //    // You can always add a value to a dictionary, 
+        //    // so this method always returns true. 
+        //    return true;
+        //}
+
+        //public object GetMember(string propName) {
+        //    var binder = Binder.GetMember(CSharpBinderFlags.None,
+        //                                  propName, GetType(),
+        //                                  new List<CSharpArgumentInfo> {
+        //                                      CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
+        //                                  });
+        //    var callsite = CallSite<Func<CallSite, object, object>>.Create(binder);
+
+        //    return callsite.Target(callsite, this);
+        //}
+
+        ///// <summary>
+        /////     Sets the value of a property.
+        ///// </summary>
+        ///// <param name="propertyName">Name of property</param>
+        ///// <param name="val">New value</param>
+        ///// <param name="fromServer">If true, will not try to update server.</param>
+        //public void SetMember(String propertyName, object val, bool fromServer = false) {
+        //    //Console.WriteLine("SetMember fromServer = {0}: {1} = {2}", fromServer, propertyName, val);
+        //    if (fromServer)
+        //        _properties[propertyName].Value = null; // this prevents sending back to server
+
+        //    var binder = Binder.SetMember(CSharpBinderFlags.None,
+        //                                  propertyName, GetType(),
+        //                                  new List<CSharpArgumentInfo> {
+        //                                      CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null),
+        //                                      CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
+        //                                  });
+        //    var callsite = CallSite<Func<CallSite, object, object, object>>.Create(binder);
+
+        //    callsite.Target(callsite, this, val);
+        //}
 
         private void SendPropertyChangeToServer(String propertyName, object value) {
-            Debug.WriteLine(String.Format("SendPropertyChangeToServer(\"{0}\", \"{1}\")", propertyName, value));
+            Debug.WriteLine("SendPropertyChangeToServer(\"{0}\", \"{1}\")", propertyName, value);
             var server = PremiseServer.Instance;
             if (server != null && !String.IsNullOrEmpty(Location))
                 server.SetValue(Location, propertyName, value.ToString());
@@ -144,7 +171,7 @@ namespace PremiseLib {
 
         protected virtual void OnPropertyChanged(string propertyName) {
             PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+            if (handler != null) handler(this, new PropertyChangedEventArgs("Item["+propertyName+"]"));
         }
     }
 }

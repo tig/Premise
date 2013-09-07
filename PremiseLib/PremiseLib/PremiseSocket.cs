@@ -14,14 +14,12 @@ namespace PremiseLib {
         private StreamReader _reader = null;
         private StreamWriter _writer = null;
 
-        public async Task ConnectAsync(string hostName, int port, bool ssl, string username, string password)
-        {
+        public async Task ConnectAsync(string hostName, int port, bool ssl, string username, string password) {
             try {
                 await _client.ConnectAsync(hostName, port);
                 _reader = new StreamReader(_client.GetStream());
                 _writer = new StreamWriter(_client.GetStream());
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 Debug.WriteLine(ex.ToString());
                 throw ex;
             }
@@ -36,18 +34,12 @@ namespace PremiseLib {
             }
         }
 
-
-        public string ReadLine() {
-            return _reader.ReadLine();
-        }
-
         public async Task<string> ReadBlockAsync(int len) {
             try {
                 char[] buffer = new char[len];
                 await _reader.ReadBlockAsync(buffer, 0, len);
                 return new string(buffer);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw e;
             }
         }
@@ -56,8 +48,7 @@ namespace PremiseLib {
             try {
                 await _writer.WriteAsync(str);
                 await _writer.FlushAsync();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw e;
             }
             return true;

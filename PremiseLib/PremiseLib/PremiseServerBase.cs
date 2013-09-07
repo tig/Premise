@@ -8,12 +8,20 @@ using PremiseLib.Annotations;
 
 namespace PremiseLib
 {
-    public sealed class PremiseServerBase 
+    public class PremiseServerBase : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        protected void DispatchSetMember(PremiseObject obj, string propertyName, string value) {
+            //if (CoreApplication.MainView.CoreWindow.Dispatcher.HasThreadAccess)
+                obj.SetMember(propertyName, value, false);
+        //    else
+        //        CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+        //        CoreDispatcherPriority.Normal, () => obj.SetMember(propertyName, value, false));
+        }
+
         [NotifyPropertyChangedInvocator]
-        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChangedEventHandler handler = PropertyChanged;
             if (handler != null)
