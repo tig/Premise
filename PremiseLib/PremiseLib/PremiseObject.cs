@@ -47,7 +47,11 @@ namespace PremiseLib {
                                            PremiseProperty.PremiseType type = PremiseProperty.PremiseType.TypeText,
                                            bool subscribe = false) {
             try {
-                _properties[propertyName] = new PremiseProperty(propertyName, type);
+                _properties[propertyName] = new PremiseProperty(propertyName, type)
+
+                // This is where we implement support for ICommand commands. 
+                if (type == PremiseProperty.PremiseType.TypeTrigger) 
+                    SetMember(propertyName + "Command", new PremiseCommand(this, propertyName));
                 Console.WriteLine("getting {0} {1}", Location, propertyName);
                 this.SetMember(propertyName, await PremiseServer.Instance.GetValueTaskAsync(Location, propertyName), false); 
                 if (subscribe)

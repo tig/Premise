@@ -1,6 +1,6 @@
 ﻿// Copyright 2013 Kindel Systems
 //   
-// This file is part of pr
+// This file is part of PremiseLib
 //   
 
 using System;
@@ -10,6 +10,12 @@ namespace PremiseLib {
     ///     This class supports mapping Premise's type system to .NET
     ///     Premise has a complete type system that mostly maps, but
     ///     with some exceptions.
+    /// 
+    ///     A property (e.g. 'Trigger') of type TypeTrigger will cause the holding object
+    ///     to automatically expose another property that exposes ICommand (named 'TriggerCommand').
+    ///     This is useful for Premise properties that are momentary such as keypad buttons and
+    ///     allows MVVM support for Commands in XAML.
+    /// 
     ///     TODO: Support additional type mappings
     /// </summary>
     public class PremiseProperty {
@@ -17,6 +23,7 @@ namespace PremiseLib {
             TypeObjectRef,
             TypeText,
             TypeBoolean,
+            TypeTrigger,  // Not really type defined by premise
             TypeInteger,
             TypeFloat,
             TypeColor,
@@ -81,6 +88,7 @@ namespace PremiseLib {
                         _value = value.ToString();
                         break;
                     case PremiseType.TypeBoolean:
+                    case PremiseType.TypeTrigger:
                         bool b;
                         if (bool.TryParse(value.ToString(), out b))
                             _value = b;

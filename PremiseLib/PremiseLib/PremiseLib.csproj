@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PremiseCommand.cs" />
     <Compile Include="PremiseServerBase.cs" />
     <Compile Include="PremiseSocket.cs" />
     <Compile Include="Properties\Annotations.cs" />
