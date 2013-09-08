@@ -5,9 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Microsoft.CSharp.RuntimeBinder;
 
 namespace PremiseLib {
@@ -47,32 +49,41 @@ namespace PremiseLib {
                                            PremiseProperty.PremiseType type = PremiseProperty.PremiseType.TypeText,
                                            bool subscribe = false) {
             try {
-                _properties[propertyName] = new PremiseProperty(propertyName, type)
+                _properties[propertyName] = new PremiseProperty(propertyName, type);
 
-                // This is where we implement support for ICommand commands. 
-                if (type == PremiseProperty.PremiseType.TypeTrigger) 
-                    SetMember(propertyName + "Command", new PremiseCommand(this, propertyName));
-                Console.WriteLine("getting {0} {1}", Location, propertyName);
-                this.SetMember(propertyName, await PremiseServer.Instance.GetValueTaskAsync(Location, propertyName), false); 
+                Debug.WriteLine("getting {0} {1}", Location, propertyName);
+                this.SetMember(propertyName, await PremiseServer.Instance.GetValueTaskAsync(Location, propertyName), false);
                 if (subscribe)
                     // Do we really want to await here?
                     await PremiseServer.Instance.Subscribe(this, propertyName);
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 throw ex;
             }
         }
 
+        /// <summary>
+        /// Property accessor. Simulates a dynamic object.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public object this[string name] {
             get {
                 PremiseProperty prop;
-                if (_properties.TryGetValue(name, out prop)) 
+                if (_properties.TryGetValue(name, out prop))
                     return prop.Value;
                 return null;
             }
             set {
                 SetMember(name, value);
             }
+        }
+
+        public PremiseCommand Commands(string name) {
+            PremiseProperty prop;
+            if (_properties.TryGetValue(name, out prop)) {
+                return new PremiseCommand(this, name);
+            }
+            return null;
         }
 
         public void SetMember(String propertyName, object value, bool fromUI = true) {
@@ -87,7 +98,7 @@ namespace PremiseLib {
             _properties[propertyName] = current;
             OnPropertyChanged(propertyName);
             if (fromUI) {
-                Console.WriteLine("Updating server: {0}: {1}", propertyName, value);
+                Debug.WriteLine("Updating server: {0}: {1}", propertyName, value);
                 SendPropertyChangeToServer(propertyName, value);
             }
         }
@@ -167,7 +178,7 @@ namespace PremiseLib {
         //}
 
         private void SendPropertyChangeToServer(String propertyName, object value) {
-            Console.WriteLine("SendPropertyChangeToServer(\"{0}\", \"{1}\")", propertyName, value);
+            Debug.WriteLine("SendPropertyChangeToServer(\"{0}\", \"{1}\")", propertyName, value);
             var server = PremiseServer.Instance;
             if (server != null && !String.IsNullOrEmpty(Location))
                 server.SetValue(Location, propertyName, value.ToString());

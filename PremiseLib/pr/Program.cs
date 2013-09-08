@@ -196,10 +196,10 @@ namespace PremiseLib {
                         Console.WriteLine("{0}: {1} = {2}",
                             ((PremiseObject)sender).Location,
                             args.PropertyName,
-                            ((PremiseObject)sender).GetMember(args.PropertyName));
+                            ((PremiseObject)sender)[args.PropertyName]);
                     };
                 }
-                gdos[0].TriggerCommand.Execute(null);
+                gdos[0].Commands("Trigger").Execute(null);
 
             }
             catch (System.Net.Sockets.SocketException socketException) {

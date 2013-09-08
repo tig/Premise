@@ -109,6 +109,7 @@
     </Compile>
     <Compile Include="MainViewModel.cs" />
     <Compile Include="MvvmViewModelLocator.cs" />
+    <Compile Include="PremiseCommands.cs" />
     <Compile Include="PremiseObject.cs" />
     <Compile Include="PremiseProperty.cs" />
     <Compile Include="PremiseServer.cs" />

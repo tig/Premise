@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Microsoft.CSharp.RuntimeBinder;
 
 namespace PremiseLib {
@@ -49,6 +50,7 @@ namespace PremiseLib {
                                            bool subscribe = false) {
             try {
                 _properties[propertyName] = new PremiseProperty(propertyName, type);
+
                 Debug.WriteLine("getting {0} {1}", Location, propertyName);
                 this.SetMember(propertyName, await PremiseServer.Instance.GetValueTaskAsync(Location, propertyName), false);
                 if (subscribe)
@@ -59,6 +61,11 @@ namespace PremiseLib {
             }
         }
 
+        /// <summary>
+        /// Property accessor. Simulates a dynamic object.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public object this[string name] {
             get {
                 PremiseProperty prop;
@@ -69,6 +76,14 @@ namespace PremiseLib {
             set {
                 SetMember(name, value);
             }
+        }
+
+        public PremiseCommand Commands(string name) {
+            PremiseProperty prop;
+            if (_properties.TryGetValue(name, out prop)) {
+                return new PremiseCommand(this, name);
+            }
+            return null;
         }
 
         public void SetMember(String propertyName, object value, bool fromUI = true) {
@@ -171,7 +186,7 @@ namespace PremiseLib {
 
         protected virtual void OnPropertyChanged(string propertyName) {
             PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null) handler(this, new PropertyChangedEventArgs("Item["+propertyName+"]"));
+            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

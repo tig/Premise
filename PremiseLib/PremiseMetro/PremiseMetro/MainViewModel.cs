@@ -27,6 +27,8 @@ namespace PremiseMetro {
         public MainViewModel() {
             Debug.WriteLine("MainViewModel()");
 
+            if (IsInDesignMode) return;
+
             PremiseServer.Instance.Host = "home";
             PremiseServer.Instance.Port = 86;
             PremiseServer.Instance.Username = "";
@@ -36,20 +38,20 @@ namespace PremiseMetro {
                     Debug.WriteLine("Yo! Connected!!");
 
                     PremiseObject o1 = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
-                    await o1.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+                    //await o1.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
                     await o1.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
-                    await PremiseServer.Instance.Subscribe(o1, "Brightness");
-                    await o1.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeText, true);
+                    //await PremiseServer.Instance.Subscribe(o1, "Brightness");
+                    //await o1.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeText, true);
 
-                    PremiseObject o2 = new PremiseObject("sys://Home/Downstairs/Office/Uplighting");
-                    await o2.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
-                    await o2.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
-                    await PremiseServer.Instance.Subscribe(o2, "Brightness");
-                    await o2.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeText, true);
+                    //PremiseObject o2 = new PremiseObject("sys://Home/Downstairs/Office/Uplighting");
+                    //await o2.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+                    //await o2.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
+                    //await PremiseServer.Instance.Subscribe(o2, "Brightness");
+                    //await o2.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeText, true);
 
                     Lights = new ObservableCollection<PremiseObject> {
-                        (PremiseObject)o1,
-                        (PremiseObject)o2
+                        (PremiseObject)o1
+                    //    (PremiseObject)o2
                     };
                     foreach (PremiseObject l in Lights) {
                         l.PropertyChanged += (s, a) => Debug.WriteLine("MVM: {0}: {1} = {2}",
