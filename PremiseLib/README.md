@@ -12,7 +12,7 @@ This project includes the following:
 
 The **Premise WebClient .NET Client Library** makes it easy to build .NET apps that talk to Premise. It supports the entire [Premise WebClient Protocol](https://github.com/tig/Premise/blob/master/Premise%20Protocol%20Docs.md) including subscriptions so polling is not needed. See README.md in that project for more details. 
 
-The client is written in C# 4.5 (Visual Studio 2012) and makes heavy use of two features that may or may not be portable to other platforms: `dynamic` and `async / await`. I intend to make this library work on ASP.NET, Windows Phone, Windows 8, Android (Xamarin), and iOS (Xamarin). So far it has only been used in a console app.
+The client is written in C# 4.5 (Visual Studio 2012) and makes heavy use of one feature that may or may not be portable to other platforms: `async / await`. I intend to make this library work on ASP.NET, Windows Phone, Windows 8, Android (Xamarin), and iOS (Xamarin). So far it has only been used in a console app and on Windows 8/WinRT.
 
 ### Example Usage
 This example illustrates connecting to a device (a light in my home office). It shows subscribing to both the `Brightness` properties and shows setting properties.
@@ -47,15 +47,13 @@ deskButton.PropertyChanged += (sender, args) => {
 // types between .NET and Premise.
 await deskButton.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypePercent);
 
-// As long as you've previously waited on StartSubscriptionAsync you don't have to call 
-// AddPropertyAsync synchronously if you don't want. 
 // Notice for 'Status' we set the last parameter to true. This subscribes to
 // changes. If you don't set this to true (or separately call "SubscribeToProperty"
 // the property will not be subscribed by default. But the property will
 // get updated from the server initially. 
-deskButton.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
+await deskButton.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
 
-deskButton.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
+await deskButton.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
 
 // Use array syntax to access the properties.
 Console.WriteLine("deskButton Status is {0}", deskbutton["Status"]);
@@ -67,11 +65,11 @@ deskButton["Trigger"] = true;
 // However, PremiseLib supports XAML Commands which make wiring up buttons in 
 // UI easy. Use the syntax "<name>Command" in your XAML or code and PremiseLib
 // will automatically set the property to true under the covers.
-deskButton["TriggerCommand"].Execute();
+deskButton["TriggerCommand"].Execute(null);
 ```
 
 Example of setting properties in code.
-```
+```C#
 PremiseObject entryLight = new PremiseObject("sys://Home/Upstairs/EntryLight");
 await entryLight.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
 entryLight["Brightness"] = entryLight["Brightness"] - .15;
@@ -128,7 +126,7 @@ This example shows how you would create an ObservableCollection that could be ea
 
 The corresponding XAML:
 
-```
+```XAML
 <ListBox x:Name="Lighting" ItemsSource="{Binding Path=KeypadButtons}" >
     <ListBox.ItemTemplate>
         <DataTemplate >
