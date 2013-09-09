@@ -9,7 +9,7 @@
     DataContext="{Binding Source={StaticResource Locator}, Path=Main}" Background="{StaticResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid Margin="10" Width="1000" VerticalAlignment="Stretch">
-        <ListBox x:Name="GDOList" ItemsSource="{Binding Path=Lights}" Background="{x:Null}" >
+        <ListBox x:Name="GDOList" ItemsSource="{Binding Path=KeypadButtons}" Background="{x:Null}" >
             <ListBox.ItemTemplate>
                 <DataTemplate >
                     <Grid Margin="6">

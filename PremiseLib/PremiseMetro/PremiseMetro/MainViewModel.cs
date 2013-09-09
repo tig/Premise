@@ -26,8 +26,10 @@ namespace PremiseMetro {
         /// </summary>
         public MainViewModel() {
             Debug.WriteLine("MainViewModel()");
+            Task t = Connect();
+        }
 
-
+        private async Task Connect() {
             PremiseServer.Instance.Host = "home";
             PremiseServer.Instance.Port = 86;
             PremiseServer.Instance.Username = "";
@@ -35,76 +37,55 @@ namespace PremiseMetro {
             PremiseServer.Instance.PropertyChanged += async (sender, args) => {
                 if (args.PropertyName == "Connected" && PremiseServer.Instance.Connected == true) {
                     Debug.WriteLine("Yo! Connected!!");
-
-                    PremiseObject o1 = new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Desk");
-                    await o1.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
-                    await o1.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true); 
-                    await o1.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
-
-                    //PremiseObject o2 = new PremiseObject("sys://Home/Downstairs/Office/Uplighting");
-                    //await o2.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
-                    //await o2.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
-                    ////await PremiseServer.Instance.Subscribe(o2, "Brightness");
-                    //await o2.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeText, true);
-
-                    PremiseObject o2 = new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Workshop");
-                    await o2.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
-                    await o2.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
-                    await o2.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
-
-                    Lights = new ObservableCollection<PremiseObject> {
-                        (PremiseObject)o1,
-                        (PremiseObject)o2
-                    };
-                    foreach (PremiseObject l in Lights) {
-                        l.PropertyChanged += (s, a) => Debug.WriteLine("MVM: {0}: {1} = {2}",
-                                                                                      ((PremiseObject)s).Location,
-                                                                                      a.PropertyName,
-                                                                                      ((PremiseObject)s)[a.PropertyName]);
-                    }
-
                 }
                 if (args.PropertyName == "Connected" && PremiseServer.Instance.Connected == false)
                     Debug.WriteLine("Disconnected!");
             };
+
             if (IsInDesignMode) {
-                Lights = new ObservableCollection<PremiseObject>();
+                KeypadButtons = new ObservableCollection<PremiseObject>();
                 var o = new PremiseObject("test");
                 o["Description"] = "Button 1";
                 o["Status"] = false;
                 o["Trigger"] = false;
-                Lights.Add(o);
+                KeypadButtons.Add(o);
                 o["Description"] = "Button 2";
                 o["Status"] = true;
                 o["Trigger"] = false;
-                Lights.Add(o);
+                KeypadButtons.Add(o);
 
                 return;
             }
-            Task t = PremiseServer.Instance.StartSubscriptionsAsync();
-             
-            //Light light = new Light();
-            //light["DisplayName"] = "Test Light";
-            //light["Brightness"] = "27%";
-            //light["PowerState"] = false;
-            ////light.DisplayName = "Test Light";
-            ////light.Brightness = "27%";
-            ////light.PowerState = false;
-            //Lights = new ObservableCollection<Light> { light };
 
-            //dynamic light = new ExpandoObject();
-            //light.DisplayName = "Test Light";
-            //light.Brightness = "27%";
-            //light.PowerState = false;
-            //Lights = new ObservableCollection<dynamic> { light };
+            await PremiseServer.Instance.StartSubscriptionsAsync();
+
+            PremiseObject o1 = new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Desk");
+            await o1.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+            await o1.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
+            await o1.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
+
+            PremiseObject o2 = new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Workshop");
+            await o2.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+            await o2.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
+            await o2.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
+
+            KeypadButtons = new ObservableCollection<PremiseObject> {
+                (PremiseObject) o1,
+                (PremiseObject) o2
+            };
+            foreach (PremiseObject l in KeypadButtons) {
+                l.PropertyChanged += (s, a) => Debug.WriteLine("MVM: {0}: {1} = {2}",
+                                                               ((PremiseObject) s).Location,
+                                                               a.PropertyName,
+                                                               ((PremiseObject) s)[a.PropertyName]);
+
+            }
         }
 
-
-
-        private ObservableCollection<PremiseObject> _lights;
-        public ObservableCollection<PremiseObject> Lights {
-            get { return _lights; }
-            set { _lights = value; RaisePropertyChanged("Lights"); }
+        private ObservableCollection<PremiseObject> _KeypadButtons;
+        public ObservableCollection<PremiseObject> KeypadButtons {
+            get { return _KeypadButtons; }
+            set { _KeypadButtons = value; RaisePropertyChanged("KeypadButtons"); }
         }
     }
     //public class Light {

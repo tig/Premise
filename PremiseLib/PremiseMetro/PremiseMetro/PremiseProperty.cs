@@ -188,7 +188,7 @@ namespace PremiseLib {
         ///// <summary>
         /////   True if the property value was retrieved from the server.
         ///// </summary>
-        //public bool UpdatedFromServer { get; set; }
+        public bool UpdatedFromServer { get; set; }
 
         //public bool CheckGetFromServer
         //{
