@@ -27,7 +27,6 @@ namespace PremiseMetro {
         public MainViewModel() {
             Debug.WriteLine("MainViewModel()");
 
-            if (IsInDesignMode) return;
 
             PremiseServer.Instance.Host = "home";
             PremiseServer.Instance.Port = 86;
@@ -37,21 +36,25 @@ namespace PremiseMetro {
                 if (args.PropertyName == "Connected" && PremiseServer.Instance.Connected == true) {
                     Debug.WriteLine("Yo! Connected!!");
 
-                    PremiseObject o1 = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
-                    //await o1.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
-                    await o1.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
-                    //await PremiseServer.Instance.Subscribe(o1, "Brightness");
-                    //await o1.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeText, true);
+                    PremiseObject o1 = new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Desk");
+                    await o1.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+                    await o1.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true); 
+                    await o1.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
 
                     //PremiseObject o2 = new PremiseObject("sys://Home/Downstairs/Office/Uplighting");
                     //await o2.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
                     //await o2.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
-                    //await PremiseServer.Instance.Subscribe(o2, "Brightness");
+                    ////await PremiseServer.Instance.Subscribe(o2, "Brightness");
                     //await o2.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeText, true);
 
+                    PremiseObject o2 = new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Workshop");
+                    await o2.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+                    await o2.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
+                    await o2.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
+
                     Lights = new ObservableCollection<PremiseObject> {
-                        (PremiseObject)o1
-                    //    (PremiseObject)o2
+                        (PremiseObject)o1,
+                        (PremiseObject)o2
                     };
                     foreach (PremiseObject l in Lights) {
                         l.PropertyChanged += (s, a) => Debug.WriteLine("MVM: {0}: {1} = {2}",
@@ -64,6 +67,20 @@ namespace PremiseMetro {
                 if (args.PropertyName == "Connected" && PremiseServer.Instance.Connected == false)
                     Debug.WriteLine("Disconnected!");
             };
+            if (IsInDesignMode) {
+                Lights = new ObservableCollection<PremiseObject>();
+                var o = new PremiseObject("test");
+                o["Description"] = "Button 1";
+                o["Status"] = false;
+                o["Trigger"] = false;
+                Lights.Add(o);
+                o["Description"] = "Button 2";
+                o["Status"] = true;
+                o["Trigger"] = false;
+                Lights.Add(o);
+
+                return;
+            }
             Task t = PremiseServer.Instance.StartSubscriptionsAsync();
              
             //Light light = new Light();

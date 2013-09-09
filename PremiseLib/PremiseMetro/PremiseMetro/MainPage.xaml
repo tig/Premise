@@ -6,17 +6,17 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:premiseLib="using:PremiseLib"
     mc:Ignorable="d"
-    DataContext="{Binding Source={StaticResource Locator}, Path=Main}">
+    DataContext="{Binding Source={StaticResource Locator}, Path=Main}" Background="{StaticResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid Margin="10" Width="1000" VerticalAlignment="Stretch">
-        <ListBox x:Name="GDOList" ItemsSource="{Binding Path=Lights}" >
+        <ListBox x:Name="GDOList" ItemsSource="{Binding Path=Lights}" Background="{x:Null}" >
             <ListBox.ItemTemplate>
                 <DataTemplate >
                     <Grid Margin="6">
                         <StackPanel Orientation="Horizontal" >
                             <TextBlock Text="{Binding [Description]}" Margin="5" />
-                            <TextBlock Text="{Binding [PowerState]}" Margin="5" />
-                            <TextBlock Text="{Binding [Brightness]}" Margin="5" />
+                            <TextBlock Text="{Binding [Status]}" Margin="5" />
+                            <Button Content="Trigger" Command="{Binding [TriggerCommand]}" Width="186" HorizontalAlignment="Center" BorderBrush="#FFCD4949" Background="#FFE48383" ></Button>
                         </StackPanel>
                     </Grid>
                 </DataTemplate>

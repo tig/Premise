@@ -71,19 +71,20 @@ namespace PremiseLib {
                 PremiseProperty prop;
                 if (_properties.TryGetValue(name, out prop))
                     return prop.Value;
+
+                // In XAML <Button Content="Trigger" Command="{Binding [TriggerCommand]}">
+                // where 'Trigger' is the name of hte property that is momentary
+                if (name.EndsWith("Command")) {
+                    string cmd = name.Substring(0, name.Length - "Command".Length);
+                    if (_properties.TryGetValue(cmd, out prop)) {
+                        return new PremiseCommand(this, cmd);
+                    }
+                }
                 return null;
             }
             set {
                 SetMember(name, value);
             }
-        }
-
-        public PremiseCommand Commands(string name) {
-            PremiseProperty prop;
-            if (_properties.TryGetValue(name, out prop)) {
-                return new PremiseCommand(this, name);
-            }
-            return null;
         }
 
         public void SetMember(String propertyName, object value, bool fromUI = true) {
@@ -186,7 +187,7 @@ namespace PremiseLib {
 
         protected virtual void OnPropertyChanged(string propertyName) {
             PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+            if (handler != null) handler(this, new PropertyChangedEventArgs("Item[" + propertyName+"]"));
         }
     }
 }
