@@ -36,14 +36,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Net.Http.Extensions">
-      <HintPath>..\packages\Microsoft.Net.Http.2.2.13\lib\net45\System.Net.Http.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Net.Http.Primitives">
-      <HintPath>..\packages\Microsoft.Net.Http.2.2.13\lib\net45\System.Net.Http.Primitives.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Net.Http.WebRequest" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -67,6 +59,10 @@
     <ProjectReference Include="..\PremiseLib\PremiseLib.csproj">
       <Project>{AC0A6C0F-2710-4861-B248-C1F2E36EF507}</Project>
       <Name>PremiseLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\pr\pr.csproj">
+      <Project>{00f8a1bc-49f1-4011-ba81-f5c132971df7}</Project>
+      <Name>pr</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

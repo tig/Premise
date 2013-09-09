@@ -19,7 +19,7 @@ namespace PremiseServerTests
             var instance = PremiseServer.Instance;
             instance.Host = "home";
             instance.Port = 86;
-            await instance.StartSubscriptionsAsync();
+            await instance.StartSubscriptionsAsync(new PremiseTcpClientSocket());
         }
     }
 }

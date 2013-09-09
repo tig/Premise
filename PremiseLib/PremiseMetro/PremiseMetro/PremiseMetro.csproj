@@ -109,12 +109,14 @@
     </Compile>
     <Compile Include="MainViewModel.cs" />
     <Compile Include="MvvmViewModelLocator.cs" />
-    <Compile Include="PremiseCommand.cs" />
-    <Compile Include="PremiseObject.cs" />
-    <Compile Include="PremiseProperty.cs" />
-    <Compile Include="PremiseServer.cs" />
-    <Compile Include="PremiseServerBase.cs" />
-    <Compile Include="PremiseSocket.cs" />
+    <Compile Include="PremiseLib\IPremiseNotify.cs" />
+    <Compile Include="PremiseLib\IPremiseSocket.cs" />
+    <Compile Include="PremiseLib\PremiseCommand.cs" />
+    <Compile Include="PremiseLib\PremiseObject.cs" />
+    <Compile Include="PremiseLib\PremiseProperty.cs" />
+    <Compile Include="PremiseLib\PremiseServer.cs" />
+    <Compile Include="WinRTIPremiseNotify.cs" />
+    <Compile Include="StreamSocketPremiseSocket.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />

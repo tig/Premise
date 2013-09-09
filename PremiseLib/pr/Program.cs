@@ -17,12 +17,11 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
 using CommandLine;
 using CommandLine.Text;
 using ManyConsole;
 using Microsoft.CSharp.RuntimeBinder;
+using pr;
 
 #endregion
 
@@ -54,6 +53,9 @@ namespace PremiseLib {
         }
 
         public async void Test(string host, int port, bool ssl, string username, string password) {
+
+            _server.Notifier = new TestNotifier();
+
             _server.Host = host;
             _server.Port = port;
             _server.Username = username;
@@ -73,7 +75,7 @@ namespace PremiseLib {
 
             try {
                 Console.WriteLine("Starting Subscriptions on {0}:{1} (SSL is {2})", host, port, ssl);
-                await _server.StartSubscriptionsAsync();
+                await _server.StartSubscriptionsAsync(new PremiseTcpClientSocket());
                 _server.FastMode = true;
 
                 PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
@@ -190,15 +192,17 @@ namespace PremiseLib {
                 //    }
                 //}
 
-                var gdos = new GarageDoorOpeners();
-                foreach (PremiseObject garageDoorOpener in gdos) {
-                    garageDoorOpener.PropertyChanged += (sender, args) => {
+                var buttons = new KeypadButtons();
+                foreach (PremiseObject button in buttons) {
+                    button.PropertyChanged += (sender, args) => {
                         var propName = PremiseProperty.NameFromItem(args.PropertyName);
                         var val = ((PremiseObject)sender)[propName];
                         Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
                     };
                 }
-                gdos[0]["TriggerCommand"].Execute(null);
+                buttons[0]["TriggerCommand"].Execute(null);
+                Thread.Sleep(1000);
+                buttons[0]["TriggerCommand"].Execute(null);
 
             }
             catch (System.Net.Sockets.SocketException socketException) {
@@ -220,18 +224,17 @@ namespace PremiseLib {
             }
         }
 
-        private class GarageDoorOpeners : ObservableCollection<dynamic> {
-            public GarageDoorOpeners() : base() {
-                Add(new PremiseObject("sys://Home/Upper Garage/West Garage Door"));
-                Add(new PremiseObject("sys://Home/Upper Garage/Center Garage Door"));
-                Add(new PremiseObject("sys://Home/Upper Garage/East Garage Door"));
+        private class KeypadButtons : ObservableCollection<dynamic> {
+            public KeypadButtons() : base() {
+                Add(new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Workshop"));
+                Add(new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Equipment"));
 
                 foreach (PremiseObject o in this) {
                     o.AddPropertyAsync("Name", PremiseProperty.PremiseType.TypeText);
-                    //o.AddPropertyAsync("DisplayName", PremiseProperty.PremiseType.TypeText);
+                    o.AddPropertyAsync("DisplayName", PremiseProperty.PremiseType.TypeText);
                     o.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
                     o.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
-                    o.AddPropertyAsync("GarageDoorStatus", PremiseProperty.PremiseType.TypeText, true);
+                    o.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
                 }
             }
         }

@@ -30,6 +30,7 @@ namespace PremiseMetro {
         }
 
         private async Task Connect() {
+            PremiseServer.Instance.Notifier = new WinRTIPremiseNotify();
             PremiseServer.Instance.Host = "home";
             PremiseServer.Instance.Port = 86;
             PremiseServer.Instance.Username = "";
@@ -57,7 +58,7 @@ namespace PremiseMetro {
                 return;
             }
 
-            await PremiseServer.Instance.StartSubscriptionsAsync();
+            await PremiseServer.Instance.StartSubscriptionsAsync(new StreamSocketPremiseSocket());
 
             PremiseObject o1 = new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Desk");
             await o1.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
@@ -75,9 +76,9 @@ namespace PremiseMetro {
             };
             foreach (PremiseObject l in KeypadButtons) {
                 l.PropertyChanged += (s, a) => Debug.WriteLine("MVM: {0}: {1} = {2}",
-                                                               ((PremiseObject) s).Location,
-                                                               a.PropertyName,
-                                                               ((PremiseObject) s)[a.PropertyName]);
+                                                               ((PremiseObject)s).Location,
+                                                               PremiseProperty.NameFromItem(a.PropertyName),
+                                                               ((PremiseObject)s)[PremiseProperty.NameFromItem(a.PropertyName)]);
 
             }
         }

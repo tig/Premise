@@ -1,6 +1,5 @@
 ﻿// Copyright 2013 Kindel Systems
 //   
-//   This is the native Windows Version of PremiseServer
 
 using System;
 using System.Collections.Generic;
@@ -20,14 +19,33 @@ namespace PremiseLib {
     /// PremiseServer implements support for the Premise WebClient protocol
     /// spoken by the SYSConnector ActiveX control.
     /// </summary>
-    public sealed class PremiseServer : PremiseServerBase, IDisposable {
+    public sealed class PremiseServer : IPremiseNotify, INotifyPropertyChanged, IDisposable {
         // Singleton pattern (pattern #4) from John Skeet: 
         // http://csharpindepth.com/Articles/General/Singleton.aspx
-        static PremiseServer() { }
+        static PremiseServer() {
+        }
+
         public static PremiseServer Instance {
             get { return instance; }
         }
+
         private static readonly PremiseServer instance = new PremiseServer();
+
+        // Each .NET client has a different way of dispatching events to the
+        // 'ui thread'. We isolate these in an IPremiseNotify implementation
+        // that the caller to PremiseServer can give us. The default 
+        // implementation does no dispatching.
+        private IPremiseNotify _notifier;
+        public IPremiseNotify Notifier {
+            get {
+                if (_notifier == null) 
+                    _notifier = this;
+                return _notifier;
+            }
+            set {
+                _notifier = value;
+            }
+        }
 
         /// <summary>
         /// Each property subscription is managed in a dictionary of Subscription
@@ -41,8 +59,9 @@ namespace PremiseLib {
             public String PropertyName;
             public bool Active;
         }
+
         private Dictionary<int, Subscription> _subscriptions = new Dictionary<int, Subscription>();
-        private PremiseSocket _subscriptionClient = null;
+        private IPremiseSocket _subscriptionClient = null;
 
         public string Host, Username, Password;
         public int Port;
@@ -56,27 +75,24 @@ namespace PremiseLib {
         /// False if the connection is closed.
         /// </summary>
         public bool Connected {
-            get {
-                return _Connected;
-            }
+            get { return _Connected; }
 
             set {
                 if (value == _Connected) return;
                 _Connected = value;
-                OnPropertyChanged();
+                Notifier.OnPropertyChanged(this, PropertyChanged);
             }
         }
 
         private bool _error = false;
+
         public bool Error {
-            get {
-                return _error;
-            }
+            get { return _error; }
 
             set {
                 if (value == _error) return;
                 _error = value;
-                OnPropertyChanged();
+                Notifier.OnPropertyChanged(this, PropertyChanged);
             }
         }
 
@@ -88,6 +104,7 @@ namespace PremiseLib {
         public string LastErrorContent;
 
         private bool _FastMode = false;
+
         /// <summary>
         /// Enable FastMode for the subscription socket.
         /// (Does not apply to Get/Set/Invoke actions).
@@ -96,15 +113,13 @@ namespace PremiseLib {
         /// FastMode.
         /// </summary>
         public bool FastMode {
-            get {
-                return _FastMode;
-            }
+            get { return _FastMode; }
 
             set {
                 if (value == _FastMode) return;
                 _FastMode = true;
                 EnableFastMode();
-                OnPropertyChanged("FastMode");
+                Notifier.OnPropertyChanged(this, PropertyChanged);
             }
         }
 
@@ -113,9 +128,9 @@ namespace PremiseLib {
         /// This starts the subscription engine. We always create one subscription for
         /// Home DisplayName to start (but ignore any updates).
         /// </summary>
-        public async Task StartSubscriptionsAsync() {
+        public async Task StartSubscriptionsAsync(IPremiseSocket premiseSocket) {
             try {
-                _subscriptionClient = new PremiseSocket();
+                _subscriptionClient = premiseSocket;
                 await _subscriptionClient.ConnectAsync(Host, Port, SSL, Username, Password);
 
                 // Assign the resulting task to a local variable to get around
@@ -131,10 +146,12 @@ namespace PremiseLib {
                     foreach (var subscription in _subscriptions) {
                         Task t = SendSubscriptionRequest(subscription.Value);
                     }
-                } else {
+                }
+                else {
                     Debug.WriteLine("SendRequest returned false");
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 Debug.WriteLine(ex.ToString());
                 Dispose();
                 throw ex;
@@ -220,31 +237,32 @@ namespace PremiseLib {
                     // enforce this limit. 
                     switch (line) {
                         case "pauseConnection":
-                        Debug.WriteLine(line);
-                        foreach (var subscription in _subscriptions) {
-                            subscription.Value.Active = false;
-                        }
-                        break;
+                            Debug.WriteLine(line);
+                            foreach (var subscription in _subscriptions) {
+                                subscription.Value.Active = false;
+                            }
+                            break;
                         case "resumeConnection":
-                        Debug.WriteLine(line);
-                        foreach (var subscription in _subscriptions) {
-                            Task t = SendSubscriptionRequest(subscription.Value);
-                        }
-                        break;
+                            Debug.WriteLine(line);
+                            foreach (var subscription in _subscriptions) {
+                                Task t = SendSubscriptionRequest(subscription.Value);
+                            }
+                            break;
                         case "fastMode":
-                        FastMode = true;
-                        Debug.WriteLine(line);
-                        break;
+                            FastMode = true;
+                            Debug.WriteLine(line);
+                            break;
                         default:
-                        // We got content!
-                        // Find the property this response belongs to and update it
-                        Subscription sub = null;
-                        if (_subscriptions.TryGetValue(hashCode, out sub))
-                            DispatchSetMember(sub.Object, sub.PropertyName, line);
-                        break;
+                            // We got content!
+                            // Find the property this response belongs to and update it
+                            Subscription sub = null;
+                            if (_subscriptions.TryGetValue(hashCode, out sub))
+                                Notifier.DispatchSetMember(sub.Object, sub.PropertyName, line);
+                            break;
                     }
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 Debug.WriteLine("ReadSubscriptionResponse: " + ex.ToString());
                 Dispose();
                 throw ex;
@@ -289,7 +307,8 @@ namespace PremiseLib {
                         return;
                     }
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -311,11 +330,12 @@ namespace PremiseLib {
                         return;
                 }
 
-                Subscription sub = new Subscription { Object = po, PropertyName = propertyName };
+                Subscription sub = new Subscription {Object = po, PropertyName = propertyName};
                 _subscriptions.Add(sub.GetHashCode(), sub);
                 await SendSubscriptionRequest(sub);
 
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -338,7 +358,8 @@ namespace PremiseLib {
                     await SendRequest(command, "");
                 }
                 sub.Active = true;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -359,11 +380,13 @@ namespace PremiseLib {
                 bool b = false;
                 try {
                     b = await _subscriptionClient.WriteStringAsync(requestString);
-                } catch (Exception ex) {
+                }
+                catch (Exception ex) {
                     Debug.WriteLine(ex.ToString());
                 }
                 return b;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -389,7 +412,8 @@ namespace PremiseLib {
                 // Send the request.
                 Debug.Assert(_subscriptionClient != null);
                 await _subscriptionClient.WriteStringAsync(packet);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -422,7 +446,8 @@ namespace PremiseLib {
                         return;
                     }
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 Dispose();
                 throw ex;
             }
@@ -436,7 +461,8 @@ namespace PremiseLib {
         ///   "0" or "1"), no response message-body
         /// </summary>
         public void SetValue(string location, string property, string value) {
-            HttpClient webclient = new HttpClient(new HttpClientHandler() { Credentials = new NetworkCredential(Username, Password) });
+            HttpClient webclient =
+                new HttpClient(new HttpClientHandler() {Credentials = new NetworkCredential(Username, Password)});
             var uri = new Uri(GetUrlFromSysUri(location) + "?e?" + property);
             Debug.WriteLine("SetValue: " + uri + ": " + value);
             webclient.PostAsync(uri, new StringContent(value));
@@ -452,11 +478,13 @@ namespace PremiseLib {
         /// </summary>
         public async Task<string> GetValueTaskAsync(string location, string property) {
             try {
-                HttpClient webclient = new HttpClient(new HttpClientHandler() { Credentials = new NetworkCredential(Username, Password) });
+                HttpClient webclient =
+                    new HttpClient(new HttpClientHandler() {Credentials = new NetworkCredential(Username, Password)});
                 var uri = new Uri(GetUrlFromSysUri(location) + "!" + property);
                 Debug.WriteLine("GetValueTaskAsync: " + uri);
                 return await webclient.GetStringAsync(uri);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 throw ex;
             }
         }
@@ -484,11 +512,13 @@ namespace PremiseLib {
             // <object>?d?<targetelementid>?[64]<method>
             // TODO: base64 encode method
             try {
-                HttpClient webclient = new HttpClient(new HttpClientHandler() { Credentials = new NetworkCredential(Username, Password) });
+                HttpClient webclient =
+                    new HttpClient(new HttpClientHandler() {Credentials = new NetworkCredential(Username, Password)});
                 var uri = new Uri(GetUrlFromSysUri(location) + "?d??" + method);
                 Debug.WriteLine("InvokeMethodTaskAsync: " + uri);
                 return await webclient.GetStringAsync(uri);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 throw ex;
             }
         }
@@ -499,18 +529,36 @@ namespace PremiseLib {
         /// </summary>
         public string GetUrlFromSysUri(string SysUrl) {
             if (SysUrl.StartsWith("sys://")) SysUrl = SysUrl.Remove(0, 6);
-            Uri uriServer = SSL ? new UriBuilder("https", Host, Port, "sys/").Uri : new UriBuilder("http", Host, Port, "sys/").Uri;
+            Uri uriServer = SSL
+                                ? new UriBuilder("https", Host, Port, "sys/").Uri
+                                : new UriBuilder("http", Host, Port, "sys/").Uri;
             return uriServer.AbsoluteUri + SysUrl;
         }
 
-        #region IDisposable Members
+        public event PropertyChangedEventHandler PropertyChanged;
 
+        #region IPremiseNotify Members
+        // Default implementation of method to set an object property's value
+        // Assumes same thread.
+        public void DispatchSetMember(PremiseObject obj, string propertyName, string value) {
+            obj.SetMember(propertyName, value, false);
+        }
+
+        // Default OnPropertyChanged method assumes same thread.
+        [NotifyPropertyChangedInvocator]
+        public void OnPropertyChanged(PremiseServer thisServer, PropertyChangedEventHandler handler, [CallerMemberName] string propertyName = null) {
+            if (handler != null) {
+                handler(thisServer, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+        #endregion
+
+        #region IDisposable Members
         public void Dispose() {
             if (_subscriptionClient != null)
                 _subscriptionClient.Dispose();
             _subscriptionClient = null;
         }
-
         #endregion
     }
 }
