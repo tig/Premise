@@ -1,6 +1,6 @@
 ﻿// Copyright 2013 Kindel Systems
 //   
-// This file is part of pr
+// This file is part of PremiseLib
 //   
 
 using System;
@@ -10,6 +10,12 @@ namespace PremiseLib {
     ///     This class supports mapping Premise's type system to .NET
     ///     Premise has a complete type system that mostly maps, but
     ///     with some exceptions.
+    /// 
+    ///     A property (e.g. 'Trigger') of type TypeTrigger will cause the holding object
+    ///     to automatically expose another property that exposes ICommand (named 'TriggerCommand').
+    ///     This is useful for Premise properties that are momentary such as keypad buttons and
+    ///     allows MVVM support for Commands in XAML.
+    /// 
     ///     TODO: Support additional type mappings
     /// </summary>
     public class PremiseProperty {
@@ -78,60 +84,58 @@ namespace PremiseLib {
                 // coerce new value to correct type
                 switch (PropertyType) {
                     case PremiseType.TypeText:
-                        _value = value.ToString();
-                        break;
+                    _value = value.ToString();
+                    break;
                     case PremiseType.TypeBoolean:
-                        bool b;
-                        if (bool.TryParse(value.ToString(), out b))
-                            _value = b;
-                        else if (value is int) {
-                            _value = ((int) value != 0);
+                    bool b;
+                    if (bool.TryParse(value.ToString(), out b))
+                        _value = b;
+                    else if (value is int) {
+                        _value = ((int)value != 0);
+                    } else if (value is string) {
+                        switch (value.ToString().ToLower()) {
+                            case "yes":
+                            case "on":
+                            _value = true;
+                            break;
+                            case "no":
+                            case "off":
+                            _value = false;
+                            break;
+                            default:
+                            _value = false;
+                            break;
                         }
-                        else if (value is string) {
-                            switch (value.ToString().ToLower()) {
-                                case "yes":
-                                case "on":
-                                    _value = true;
-                                    break;
-                                case "no":
-                                case "off":
-                                    _value = false;
-                                    break;
-                                default:
-                                    _value = false;
-                                    break;
-                            }
-                        }
-                        break;
+                    }
+                    break;
                     case PremiseType.TypeInteger:
-                        int i;
-                        if (int.TryParse(value.ToString(), out i))
-                            _value = i;
-                        break;
+                    int i;
+                    if (int.TryParse(value.ToString(), out i))
+                        _value = i;
+                    break;
                     case PremiseType.TypeFloat:
-                        double d;
-                        if (double.TryParse(value.ToString(), out d))
-                            _value = d;
-                        break;
+                    double d;
+                    if (double.TryParse(value.ToString(), out d))
+                        _value = d;
+                    break;
                     case PremiseType.TypePercent:
-                        double p;
-                        if (value.ToString().EndsWith("%")) {
-                            int n;
-                            if (int.TryParse(value.ToString().Replace("%", ""), out n))
-                                _value = (double) n/100;
-                        }
-                        else if (double.TryParse(value.ToString(), out p))
-                            _value = p;
-                        break;
+                    double p;
+                    if (value.ToString().EndsWith("%")) {
+                        int n;
+                        if (int.TryParse(value.ToString().Replace("%", ""), out n))
+                            _value = (double)n / 100;
+                    } else if (double.TryParse(value.ToString(), out p))
+                        _value = p;
+                    break;
                     case PremiseType.TypeDate:
                     case PremiseType.TypeTime:
                     case PremiseType.TypeDateTime:
-                        DateTime dt;
-                        if (value is DateTime)
-                            _value = value;
-                        else if (DateTime.TryParse(value.ToString(), out dt))
-                            _value = dt;
-                        break;
+                    DateTime dt;
+                    if (value is DateTime)
+                        _value = value;
+                    else if (DateTime.TryParse(value.ToString(), out dt))
+                        _value = dt;
+                    break;
                     case PremiseType.TypeObjectRef:
                     case PremiseType.TypeColor:
                     case PremiseType.TypeStaticText:
@@ -159,10 +163,23 @@ namespace PremiseLib {
                     case PremiseType.TypePicture:
                     case PremiseType.Picture:
                     default:
-                        _value = value;
-                        break;
+                    _value = value;
+                    break;
                 }
             }
+        }
+
+        // Dynamic binding in XAML requires that we use
+        // array indexer syntax in XAML. To access a property use
+        // <TextBlock Text="{Binding [Description]}"/>
+        public static string NameFromItem(string item) {
+            // "Item[PropertyName]"
+            return item.Substring(5, item.Length - 6);
+        }
+
+        public static string ItemFromName(string name) {
+            // "Item[PropertyName]"
+            return "Item[" + name + "]";
         }
 
         /// <summary>
@@ -188,7 +205,7 @@ namespace PremiseLib {
         ///// <summary>
         /////   True if the property value was retrieved from the server.
         ///// </summary>
-        public bool UpdatedFromServer { get; set; }
+        //public bool UpdatedFromServer { get; set; }
 
         //public bool CheckGetFromServer
         //{

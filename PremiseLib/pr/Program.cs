@@ -78,8 +78,9 @@ namespace PremiseLib {
 
                 PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
                 ob.PropertyChanged += (sender, args) => {
-                    var val = ((PremiseObject)sender)[args.PropertyName];
-                    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+                    var propName = PremiseProperty.NameFromItem(args.PropertyName);
+                    var val = ((PremiseObject)sender)[propName];
+                    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
                 };
 
                 await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, false);
@@ -189,17 +190,15 @@ namespace PremiseLib {
                 //    }
                 //}
 
-                dynamic gdos = new GarageDoorOpeners();
+                var gdos = new GarageDoorOpeners();
                 foreach (PremiseObject garageDoorOpener in gdos) {
-                    garageDoorOpener.PropertyChanged += (sender, args) =>
-                    {
-                        Console.WriteLine("{0}: {1} = {2}",
-                            ((PremiseObject)sender).Location,
-                            args.PropertyName,
-                            ((PremiseObject)sender)[args.PropertyName]);
+                    garageDoorOpener.PropertyChanged += (sender, args) => {
+                        var propName = PremiseProperty.NameFromItem(args.PropertyName);
+                        var val = ((PremiseObject)sender)[propName];
+                        Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
                     };
                 }
-                gdos[0].Commands("Trigger").Execute(null);
+                gdos[0]["TriggerCommand"].Execute(null);
 
             }
             catch (System.Net.Sockets.SocketException socketException) {
@@ -231,7 +230,7 @@ namespace PremiseLib {
                     o.AddPropertyAsync("Name", PremiseProperty.PremiseType.TypeText);
                     //o.AddPropertyAsync("DisplayName", PremiseProperty.PremiseType.TypeText);
                     o.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
-                    o.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeTrigger);
+                    o.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
                     o.AddPropertyAsync("GarageDoorStatus", PremiseProperty.PremiseType.TypeText, true);
                 }
             }

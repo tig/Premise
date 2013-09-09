@@ -1,9 +1,10 @@
-﻿using System;
+﻿// .NET 4.5 version
+
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
-using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using PremiseLib.Annotations;

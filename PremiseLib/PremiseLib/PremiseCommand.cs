@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace PremiseLib
-{
+namespace PremiseLib {
     public class PremiseCommand : ICommand {
         private string _propertyName;
         private dynamic _holdingObject;
@@ -38,7 +32,9 @@ namespace PremiseLib
         }
 
         public bool CanExecute(object parameter) {
-            return _holdingObject != null && !String.IsNullOrEmpty(_propertyName);
+            return _holdingObject != null
+                && !String.IsNullOrEmpty(_propertyName)
+                && PremiseServer.Instance.Connected;
         }
 
         public void Execute(object parameter) {

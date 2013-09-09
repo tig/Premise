@@ -3,11 +3,7 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
-using GalaSoft.MvvmLight.Threading;
-using Windows.ApplicationModel.Core;
-using Windows.Foundation;
 using Windows.Networking;
 using Windows.Networking.Sockets;
 using System.Runtime.CompilerServices;

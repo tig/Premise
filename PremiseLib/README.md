@@ -16,80 +16,146 @@ The **Premise WebClient .NET Client Library** makes it easy to build .NET apps t
 
 The client is written in C# 4.5 (Visual Studio 2012) and makes heavy use of two features that may or may not be portable to other platforms: `dynamic` and `async / await`. I intend to make this library work on ASP.NET, Windows Phone, Windows 8, Android (Xamarin), and iOS (Xamarin). So far it has only been used in a console app.
 
-I've provided a little command line sample app called `pr` that I used for testing this library. You can find it [here.](..)
-
 ### Example Usage
 This example illustrates connecting to a device (a light in my home office). It shows subscribing to both the `Brightness` properties and shows setting properties.
 
 ```C#
-PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
+// Setup server connection
+_server.Host = host;
+_server.Port = port;
+_server.Username = username;
+_server.Password = password;
 
-// Create event handler to receive notifications when the value of a 
-// property on this object changes
-ob.PropertyChanged += (sender, args) => {
-    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
-    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location,
-         args.PropertyName, val);
+// Turn on subscriptions (optional if you don't want them)
+await _server.StartSubscriptionsAsync();
+
+// FastMode is off by default
+_server.FastMode = true;
+
+// Create a local object representing a server object
+PremiseObject deskButton = new PremiseObject("sys://Home/Downstairs/Office/Keypad/Button_Desk");
+
+// Create event handler to receive subscription notifications when the value of a 
+// property on this object changes on the server
+deskButton.PropertyChanged += (sender, args) => {
+    // Note 
+    var val = ((PremiseObject)sender)[PremiseProperty.NameFromItem(args.PropertyName)];
+    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, PremiseProperty.NameFromItem(args.PropertyName), val);
 };
 
-// Subscribe to the properties. Provide hints as to their types so that the
-// library an coerce types between .NET and Premise.
-await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
+// Identify what properties you care about. In this case we care about 'Description'
+// 'Status', and 'Trigger' because this is a keypad button. 
+// You can provide hints as to their types so that the library can coerce 
+// types between .NET and Premise.
+await deskButton.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypePercent);
 
-// You don't have to call the AddPropertyAsync synchronously if you don't want. 
-// They are fire-and-forget
-ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, true);
+// As long as you've previously waited on StartSubscriptionAsync you don't have to call 
+// AddPropertyAsync synchronously if you don't want. 
+// Notice for 'Status' we set the last parameter to true. This subscribes to
+// changes. If you don't set this to true (or separately call "SubscribeToProperty"
+// the property will not be subscribed by default. But the property will
+// get updated from the server initially. 
+deskButton.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
 
-// Use dynamic to access the properties.
-((dynamic) ob).Brightness = ((dynamic) ob).Brightness - .15;
+deskButton.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
 
-// The preceding line will have caused the value to change on the server
-// resulting in a subscription update to the client. Therefore the property
-// change notification above will have been called twice (once for when we
-// changed the value locally and once when the server notified us). 
+// Use array syntax to access the properties.
+Console.WriteLine("deskButton Status is {0}", deskbutton["Status"]);
 
-// Note we can use Premise type syntax
-((dynamic)ob).Brightness = "33%";
+// From code you can trigger a Premise momentary property just by setting 
+// it to true
+deskButton["Trigger"] = true;
+
+// However, PremiseLib supports XAML Commands which make wiring up buttons in 
+// UI easy. Use the syntax "<name>Command" in your XAML or code and PremiseLib
+// will automatically set the property to true under the covers.
+deskButton["TriggerCommand"].Execute();
+```
+
+Example of setting properties in code.
+```
+PremiseObject entryLight = new PremiseObject("sys://Home/Upstairs/EntryLight");
+await entryLight.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
+entryLight["Brightness"] = entryLight["Brightness"] - .15;
+
+// The preceding line will cause the Brightness property to change on the client. This
+// will cause the value to get sent to the server.
+// This will then result in a subscription update back to the client. 
+// Therefore the property change notification be called at least twice (once for when we
+// changed the value locally and once when the server notified us).
+// In some cases, the client will get multiple updates because the underlying driver
+// in Premise rounds the value (Lutron does this). 
+
+// Note we can use Premise type syntax because PremiseProperty knows how to 
+// coerce for PremiseTypePercent types.
+entryLight["Brightness"] = "33%";
 ```
 
 This example shows how you would create an ObservableCollection that could be easily consumed by a XAML based application on Windows 8 or Windows Phone.
 
 ```C#
-    // Setup the collection
-	GarageDoorOpeners gdos = new GarageDoorOpeners();
+        ...
+        await PremiseServer.Instance.StartSubscriptionsAsync();
 
-	foreach (PremiseObject garageDoorOpener in gdos) {
-	    garageDoorOpener.PropertyChanged += (sender, args) => {
-	        Console.WriteLine("{0}: {1} = {2}", 
-	            ((PremiseObject)sender).Location, 
-	            args.PropertyName, 
-	            ((PremiseObject)sender).GetMember(args.PropertyName));
-	    };
-	}
-	gdos[1].Trigger = true;
+        PremiseObject o1 = new PremiseObject("sys://Home/Downstairs/Office/Keypad/Button_Desk");
+        await o1.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+        await o1.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
+        await o1.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
 
+        PremiseObject o2 = new PremiseObject("sys://Home/Downstairs/Office/Keypad/Button_Workshop");
+        await o2.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+        await o2.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
+        await o2.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
 
-// Helper observable class
-private class GarageDoorOpeners : ObservableCollection<dynamic> {
-    public GarageDoorOpeners() : base() {
-        Add(new PremiseObject("sys://Home/Upper Garage/West Garage Door"));
-        Add(new PremiseObject("sys://Home/Upper Garage/Center Garage Door"));
-        Add(new PremiseObject("sys://Home/Upper Garage/East Garage Door"));
+        KeypadButtons = new ObservableCollection<PremiseObject> {
+            (PremiseObject) o1,
+            (PremiseObject) o2
+        };
+        foreach (PremiseObject l in KeypadButtons) {
+            l.PropertyChanged += (s, a) => Debug.WriteLine("MVM: {0}: {1} = {2}",
+                                                           ((PremiseObject) s).Location,
+                                                           a.PropertyName,
+                                                           ((PremiseObject) s)[a.PropertyName]);
 
-        foreach (PremiseObject o in this) {
-            o.AddPropertyAsync("Name", PremiseProperty.PremiseType.TypeText);
-            o.AddPropertyAsync("DisplayName", PremiseProperty.PremiseType.TypeText);
-            o.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
-            o.AddPropertyAsync("GarageDoorStatus", PremiseProperty.PremiseType.TypeText, true);
         }
+    }
+
+    private ObservableCollection<PremiseObject> _KeypadButtons;
+    public ObservableCollection<PremiseObject> KeypadButtons {
+        get { return _KeypadButtons; }
+        set { _KeypadButtons = value; RaisePropertyChanged("KeypadButtons"); }
     }
 }
 ```
+
+The corresponding XAML:
+
+```
+<ListBox x:Name="Lighting" ItemsSource="{Binding Path=KeypadButtons}" >
+    <ListBox.ItemTemplate>
+        <DataTemplate >
+            <Grid Margin="6">
+                <StackPanel Orientation="Horizontal" >
+                    <TextBlock Text="{Binding [Description]}" VerticalAlignment="Center" Width="120" />
+                    <TextBlock Text="{Binding [Status]}"  VerticalAlignment="Center" Width="120" />
+                    <Button Content="Trigger" Command="{Binding [TriggerCommand]}" Width="186" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+    </ListBox.ItemTemplate>
+</ListBox>
+```
+
+The beauty of the above is that the button is automatically disabled if there is no connection to the server.
+
+## Other examples
+
+* pr - A command line example included in the PremiseLib project
+* PremiseMetro - a Win8/WinRT example.
+
 ## What's Next?
 * Put the library on NuGet
 * Incorporate it into an Android app using Xamarin (Mono). This will suss out all cross-platform issues.
 * Build an iOS test app.
-* Build a Windows 8 test app.
 * Re-write my Windows Phone app to use this instead of my hack-job I'm currently using.
-
 

@@ -23,7 +23,6 @@ namespace PremiseLib {
             TypeObjectRef,
             TypeText,
             TypeBoolean,
-            TypeTrigger,  // Not really type defined by premise
             TypeInteger,
             TypeFloat,
             TypeColor,
@@ -88,7 +87,6 @@ namespace PremiseLib {
                         _value = value.ToString();
                         break;
                     case PremiseType.TypeBoolean:
-                    case PremiseType.TypeTrigger:
                         bool b;
                         if (bool.TryParse(value.ToString(), out b))
                             _value = b;
@@ -173,7 +171,18 @@ namespace PremiseLib {
             }
         }
 
+        // Dynamic binding in XAML requires that we use
+        // array indexer syntax in XAML. To access a property use
+        // <TextBlock Text="{Binding [Description]}"/>
+        public static string NameFromItem(string item) {
+            // "Item[PropertyName]"
+            return item.Substring(5, item.Length - 6);
+        }
 
+        public static string ItemFromName(string name) {
+            // "Item[PropertyName]"
+            return "Item[" + name + "]";
+        }
 
         /// <summary>
         ///     The name of the property. Matches the name on the server.

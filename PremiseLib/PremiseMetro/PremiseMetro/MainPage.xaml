@@ -9,14 +9,14 @@
     DataContext="{Binding Source={StaticResource Locator}, Path=Main}" Background="{StaticResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid Margin="10" Width="1000" VerticalAlignment="Stretch">
-        <ListBox x:Name="GDOList" ItemsSource="{Binding Path=KeypadButtons}" Background="{x:Null}" >
+        <ListBox x:Name="GDOList" ItemsSource="{Binding Path=KeypadButtons}" >
             <ListBox.ItemTemplate>
                 <DataTemplate >
                     <Grid Margin="6">
                         <StackPanel Orientation="Horizontal" >
-                            <TextBlock Text="{Binding [Description]}" Margin="5" />
-                            <TextBlock Text="{Binding [Status]}" Margin="5" />
-                            <Button Content="Trigger" Command="{Binding [TriggerCommand]}" Width="186" HorizontalAlignment="Center" BorderBrush="#FFCD4949" Background="#FFE48383" ></Button>
+                            <TextBlock Text="{Binding [Description]}" VerticalAlignment="Center" Width="120" />
+                            <TextBlock Text="{Binding [Status]}"  VerticalAlignment="Center" Width="120" />
+                            <Button Content="Trigger" Command="{Binding [TriggerCommand]}" Width="186" />
                         </StackPanel>
                     </Grid>
                 </DataTemplate>

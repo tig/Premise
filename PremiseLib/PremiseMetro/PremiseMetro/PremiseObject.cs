@@ -6,11 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Dynamic;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Windows.Input;
-using Microsoft.CSharp.RuntimeBinder;
 
 namespace PremiseLib {
     /// <summary>
@@ -113,7 +109,7 @@ namespace PremiseLib {
 
         protected virtual void OnPropertyChanged(string propertyName) {
             PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null) handler(this, new PropertyChangedEventArgs("Item[" + propertyName+"]"));
+            if (handler != null) handler(this, new PropertyChangedEventArgs(PremiseProperty.ItemFromName(propertyName)));
         }
     }
 }

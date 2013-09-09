@@ -6,11 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Dynamic;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Windows.Input;
-using Microsoft.CSharp.RuntimeBinder;
 
 namespace PremiseLib {
     /// <summary>
@@ -71,19 +67,20 @@ namespace PremiseLib {
                 PremiseProperty prop;
                 if (_properties.TryGetValue(name, out prop))
                     return prop.Value;
+
+                // In XAML <Button Content="Trigger" Command="{Binding [TriggerCommand]}">
+                // where 'Trigger' is the name of hte property that is momentary
+                if (name.EndsWith("Command")) {
+                    string cmd = name.Substring(0, name.Length - "Command".Length);
+                    if (_properties.TryGetValue(cmd, out prop)) {
+                        return new PremiseCommand(this, cmd);
+                    }
+                }
                 return null;
             }
             set {
                 SetMember(name, value);
             }
-        }
-
-        public PremiseCommand Commands(string name) {
-            PremiseProperty prop;
-            if (_properties.TryGetValue(name, out prop)) {
-                return new PremiseCommand(this, name);
-            }
-            return null;
         }
 
         public void SetMember(String propertyName, object value, bool fromUI = true) {
@@ -103,80 +100,6 @@ namespace PremiseLib {
             }
         }
 
-        //public override bool TryGetMember(GetMemberBinder binder, out object result) {
-        //    string name = binder.Name;
-        //    result = null;
-        //    // If the property name is found in a dictionary, 
-        //    // set the result parameter to the property value and return true. 
-        //    // Otherwise, return false. 
-        //    PremiseProperty prop;
-        //    if (_properties.TryGetValue(name, out prop)) {
-        //        result = prop.Value;
-        //        return true;
-        //    }
-        //    return false;
-        //}
-
-        //// If you try to set a value of a property that is 
-        //// not defined in the class, this method is called. 
-        //public override bool TrySetMember(SetMemberBinder binder, object value) {
-        //    string name = binder.Name;
-
-        //    PremiseProperty current = null;
-        //    // If this is a new property, add it to the dictionary and assume it's text
-        //    if (!_properties.TryGetValue(name, out current)) {
-        //        current = new PremiseProperty(name, PremiseProperty.PremiseType.TypeText);
-        //    }
-        //    // Only update value if it changed
-        //    if (current.Value == value) return true;
-
-        //    bool fromServer = (current.Value == null);
-        //    current.Value = value;
-        //    _properties[name] = current;
-        //    if (value != null && !fromServer) {
-        //        Console.WriteLine("Updating server: {0}: {1}", name, value);
-        //        SendPropertyChangeToServer(name, value);
-        //    }
-        //    OnPropertyChanged(name);
-
-        //    // You can always add a value to a dictionary, 
-        //    // so this method always returns true. 
-        //    return true;
-        //}
-
-        //public object GetMember(string propName) {
-        //    var binder = Binder.GetMember(CSharpBinderFlags.None,
-        //                                  propName, GetType(),
-        //                                  new List<CSharpArgumentInfo> {
-        //                                      CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
-        //                                  });
-        //    var callsite = CallSite<Func<CallSite, object, object>>.Create(binder);
-
-        //    return callsite.Target(callsite, this);
-        //}
-
-        ///// <summary>
-        /////     Sets the value of a property.
-        ///// </summary>
-        ///// <param name="propertyName">Name of property</param>
-        ///// <param name="val">New value</param>
-        ///// <param name="fromServer">If true, will not try to update server.</param>
-        //public void SetMember(String propertyName, object val, bool fromServer = false) {
-        //    //Console.WriteLine("SetMember fromServer = {0}: {1} = {2}", fromServer, propertyName, val);
-        //    if (fromServer)
-        //        _properties[propertyName].Value = null; // this prevents sending back to server
-
-        //    var binder = Binder.SetMember(CSharpBinderFlags.None,
-        //                                  propertyName, GetType(),
-        //                                  new List<CSharpArgumentInfo> {
-        //                                      CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null),
-        //                                      CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
-        //                                  });
-        //    var callsite = CallSite<Func<CallSite, object, object, object>>.Create(binder);
-
-        //    callsite.Target(callsite, this, val);
-        //}
-
         private void SendPropertyChangeToServer(String propertyName, object value) {
             Debug.WriteLine("SendPropertyChangeToServer(\"{0}\", \"{1}\")", propertyName, value);
             var server = PremiseServer.Instance;
@@ -186,7 +109,7 @@ namespace PremiseLib {
 
         protected virtual void OnPropertyChanged(string propertyName) {
             PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+            if (handler != null) handler(this, new PropertyChangedEventArgs(PremiseProperty.ItemFromName(propertyName)));
         }
     }
 }
