@@ -4,7 +4,7 @@ using System.Windows.Input;
 namespace PremiseLib {
     public class PremiseCommand : ICommand {
         private string _propertyName;
-        private dynamic _holdingObject;
+        private PremiseObject _holdingObject;
 
         public PremiseCommand(PremiseObject holdingObject, string propertyName) {
             _holdingObject = holdingObject;

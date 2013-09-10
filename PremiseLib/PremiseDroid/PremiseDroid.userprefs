@@ -2,12 +2,23 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="PremiseDroid\MainActivity.cs">
     <Files>
-      <File FileName="PremiseDroid\MainActivity.cs" Line="13" Column="3" />
+      <File FileName="PremiseDroid\MainActivity.cs" Line="17" Column="1" />
+      <File FileName="..\pr\PremiseTcpClientSocket.cs" Line="11" Column="1" />
     </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="PremiseDroid" expanded="True">
+            <Node name="References" expanded="True" selected="True" />
+            <Node name="PremiseLib" expanded="True" />
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
-  <MonoDevelop.Ide.ItemProperties.PremiseDroid />
+  <MonoDevelop.Ide.ItemProperties.PremiseDroid AndroidDeviceId-Debug="FA35YS500377" />
 </Properties>

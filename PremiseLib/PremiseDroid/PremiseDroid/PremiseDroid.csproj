@@ -23,11 +23,12 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;</DefineConstants>
+    <DefineConstants>DEBUG;MONODROID</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AndroidLinkMode>None</AndroidLinkMode>
     <ConsolePause>false</ConsolePause>
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -37,17 +38,43 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
     <Reference Include="Mono.Android" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net" />
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MainActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="..\..\PremiseLib\IPremiseNotify.cs">
+      <Link>PremiseLib\IPremiseNotify.cs</Link>
+    </Compile>
+    <Compile Include="..\..\PremiseLib\IPremiseSocket.cs">
+      <Link>PremiseLib\IPremiseSocket.cs</Link>
+    </Compile>
+    <Compile Include="..\..\PremiseLib\PremiseCommand.cs">
+      <Link>PremiseLib\PremiseCommand.cs</Link>
+    </Compile>
+    <Compile Include="..\..\PremiseLib\PremiseObject.cs">
+      <Link>PremiseLib\PremiseObject.cs</Link>
+    </Compile>
+    <Compile Include="..\..\PremiseLib\PremiseProperty.cs">
+      <Link>PremiseLib\PremiseProperty.cs</Link>
+    </Compile>
+    <Compile Include="..\..\PremiseLib\PremiseServer.cs">
+      <Link>PremiseLib\PremiseServer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\pr\PremiseTcpClientSocket.cs">
+      <Link>PremiseTcpClientSocket.cs</Link>
+    </Compile>
+    <Compile Include="MonoIPremiseNotify.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -60,4 +87,7 @@
     <AndroidResource Include="Resources\drawable\Icon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="PremiseLib\" />
+  </ItemGroup>
 </Project>

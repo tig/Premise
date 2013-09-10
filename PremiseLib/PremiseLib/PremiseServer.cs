@@ -9,7 +9,9 @@ using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+#if !MONODROID
 using PremiseLib.Annotations;
+#endif
 
 namespace PremiseLib {
     /// <summary>
@@ -545,8 +547,10 @@ namespace PremiseLib {
         }
 
         // Default OnPropertyChanged method assumes same thread.
+#if !MONODROID
         [NotifyPropertyChangedInvocator]
-        public void OnPropertyChanged(PremiseServer thisServer, PropertyChangedEventHandler handler, [CallerMemberName] string propertyName = null) {
+#endif
+		public void OnPropertyChanged(PremiseServer thisServer, PropertyChangedEventHandler handler, [CallerMemberName] string propertyName = null) {
             if (handler != null) {
                 handler(thisServer, new PropertyChangedEventArgs(propertyName));
             }

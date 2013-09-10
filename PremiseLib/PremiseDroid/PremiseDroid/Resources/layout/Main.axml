@@ -2,13 +2,33 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    >
-<Button  
-    android:id="@+id/myButton"
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="@string/hello"
-    />
+    android:layout_height="fill_parent">
+    <Button
+        android:text="Start"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/buttonStart" />
+    <TextView
+        android:text="Not Connected..."
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textConnected" />
+    <TextView
+        android:text="Keypad1"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_width="318.7dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/textKeyPad1" />
+    <TextView
+        android:text="Status1"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textKeypadStatus1" />
+    <Button
+        android:text="Trigger"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/buttonTrigger" />
 </LinearLayout>
-

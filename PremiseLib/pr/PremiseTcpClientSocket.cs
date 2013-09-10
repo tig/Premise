@@ -7,7 +7,6 @@ using System.IO;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using PremiseLib.Annotations;
 
 namespace PremiseLib {
     public class PremiseTcpClientSocket : IPremiseSocket {

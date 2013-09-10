@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+#if !MONODROID
 using PremiseLib.Annotations;
+#endif
 
 namespace PremiseLib {
     /// <summary>
@@ -13,8 +15,9 @@ namespace PremiseLib {
     /// </summary>
     public interface IPremiseNotify {
         void DispatchSetMember(PremiseObject obj, string propertyName, string value);
-
+#if !MONODROID
         [NotifyPropertyChangedInvocator]
+#endif
         void OnPropertyChanged(PremiseServer thisServer, PropertyChangedEventHandler handler, [CallerMemberName] string propertyName = null);
     }
 }
