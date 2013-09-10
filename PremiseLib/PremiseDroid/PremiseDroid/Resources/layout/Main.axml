@@ -3,11 +3,6 @@
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
-    <Button
-        android:text="Start"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/buttonStart" />
     <TextView
         android:text="Not Connected..."
         android:textAppearance="?android:attr/textAppearanceLarge"
@@ -15,20 +10,88 @@
         android:layout_height="wrap_content"
         android:id="@+id/textConnected" />
     <TextView
-        android:text="Keypad1"
+        android:text="lower west"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:layout_width="318.7dp"
         android:layout_height="wrap_content"
-        android:id="@+id/textKeyPad1" />
+        android:id="@+id/textLowerWest" />
     <TextView
-        android:text="Status1"
+        android:text="..."
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/textKeypadStatus1" />
+        android:id="@+id/textLowerWestStatus" />
     <Button
-        android:text="Trigger"
+        android:text="Open/Close"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/buttonTrigger" />
+        android:id="@+id/buttonLowerWest" />
+    <TextView
+        android:text="lower east"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_width="318.7dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/textLowerEast" />
+    <TextView
+        android:text="..."
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textLowerEastStatus" />
+    <Button
+        android:text="Open/Close"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/buttonLowerEast" />
+    <TextView
+        android:text="upper west"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_width="318.7dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/textUpperWest" />
+    <TextView
+        android:text="..."
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textUpperWestStatus" />
+    <Button
+        android:text="Open/Close"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/buttonUpperWest" />
+    <TextView
+        android:text="upper center"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_width="318.7dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/textUpperCenter" />
+    <TextView
+        android:text="..."
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textUpperCenterStatus" />
+    <Button
+        android:text="Open/Close"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/buttonUpperCenter" />
+    <TextView
+        android:text="upper east"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_width="318.7dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/textUpperEast" />
+    <TextView
+        android:text="..."
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textUpperEastStatus" />
+    <Button
+        android:text="Open/Close"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/buttonUpperEast" />
 </LinearLayout>
