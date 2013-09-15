@@ -4,7 +4,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using PremiseLib;
-using PremiseLib.Annotations;
 
 namespace pr {
     class TestNotifier : IPremiseNotify {
@@ -15,7 +14,6 @@ namespace pr {
         }
 
         // Default OnPropertyChanged method assumes same thread.
-        [NotifyPropertyChangedInvocator]
         public void OnPropertyChanged(PremiseServer thisServer, PropertyChangedEventHandler handler, [CallerMemberName] string propertyName = null) {
             if (handler != null) {
                 handler(thisServer, new PropertyChangedEventArgs(propertyName));

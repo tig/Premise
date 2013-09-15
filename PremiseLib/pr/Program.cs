@@ -70,7 +70,7 @@ namespace PremiseLib {
                 if (args.PropertyName == "Connected")
                     Console.WriteLine("{0} {1}", _server.Connected ? "Connected to" : "Disconnected from", _server.Host);
                 if (args.PropertyName == "FastMode")
-                    Console.WriteLine("FastMode is: {0}", ((PremiseServer) sender).FastMode);
+                    Console.WriteLine("FastMode: {0}", ((PremiseServer) sender).FastMode);
             };
 
             try {
@@ -78,131 +78,17 @@ namespace PremiseLib {
                 await _server.StartSubscriptionsAsync(new PremiseTcpClientSocket());
                 _server.FastMode = true;
 
-                PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
-                ob.PropertyChanged += (sender, args) => {
-                    var propName = PremiseProperty.NameFromItem(args.PropertyName);
-                    var val = ((PremiseObject)sender)[propName];
-                    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
-                };
+                await TestSubscriptions();
 
-                await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, false);
-                await ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, false);
+                //await TestRecurringUpdate();
 
-                Thread.Sleep(1000);
-                await _server.Subscribe(ob, "Brightness");
+                //await TestGetXML();
 
-                double d = 0.2;
-                ob["Brightness"] = d;
-                await _server.Unsubscribe(ob, "Brightness");
-                Thread.Sleep(1);
-                ob["Brightness"] = d = d + .1;
-                Thread.Sleep(1);
-                ob["Brightness"] = d = d + .1;
-                Thread.Sleep(1);
-                ob["Brightness"] = d = d + .1;
-                Thread.Sleep(1);
-                ob["Brightness"] = d = d + .1;
-                Thread.Sleep(1);
-                ob["Brightness"] = d = d + .1;
-                Thread.Sleep(1000);
-                ob["Brightness"] = d = d + .1;
-                Thread.Sleep(1000);
-                ob["Brightness"] = d = d + .1;
+                //await TestCommandExecute();
 
-                Thread.Sleep(2000);
-                await _server.Subscribe(ob, "Brightness");
-
-                ob["Brightness"] = "33%";
-                //((dynamic) ob).Brightness = ((dynamic) ob).Brightness + .25;
-
-                //PremiseObject motion = new PremiseObject("sys://Home/Downstairs/Office/Motion Detector");
-                //motion.PropertyChanged += (sender, args) => {
-                //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
-                //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
-                //};
-
-                //await motion.AddPropertiesAsync();
-                //await motion.AddPropertyAsync("MotionDetected", subscribe: true);
-                //await motion.AddPropertyAsync("LastTimeTriggered", PremiseProperty.PremiseType.TypeDateTime, subscribe: true);
-
-                //Console.WriteLine("{0:F}", ((dynamic)motion).LastTimeTriggered);
-
-                ////sys://Home/Admin/EqupTemp_VoltageSensor
-                //PremiseObject voltage = await WatchObjectAsync("sys://Home/Admin/EqupTemp_VoltageSensor",
-                //                                              new PremiseProperty("Name",
-                //                                                                  PremiseProperty.PremiseType.TypeText),
-                //                                              new PremiseProperty("Voltage",
-                //                                                                  PremiseProperty.PremiseType.TypeFloat));
-                //voltage.PropertyChanged += (sender, args) => {
-                //    //ob["Brightness = ((dynamic)voltage).Voltage / 2;
-                //    //((dynamic)office).Occupancy = !((dynamic)office).Occupancy;
-                //};
-                //string result = await _server.InvokeMethodTaskAsync("{A2214A6E-1A22-4A67-AEC7-CDB863C316BB}", "GetButtons()");
-                //foreach (string s in result.Split(',')) {
-                //    await WatchObjectAsync(s,
-                //        new PremiseProperty("Status", PremiseProperty.PremiseType.TypeBoolean),
-                //        new PremiseProperty("Trigger", PremiseProperty.PremiseType.TypeBoolean));
-                //}
+                await TestInvokeMethod();
 
 
-                //XmlDocument doc = new XmlDocument();
-                //doc.LoadXml(((dynamic)office)._xml);
-                //XmlNodeList nodes = doc.SelectNodes("//Object");
-                //foreach (XmlElement n in nodes) {
-                //    Console.WriteLine("{0} {1}", n.Attributes["ID"].Value, n.Attributes["Name"].Value);
-                //}
-
-                //// This can take a while with a lot of objects
-                //var home = new PremiseObject("sys://Home/Downstairs");
-                //home.PropertyChanged += (sender, args) => {
-                //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
-                //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
-                //};
-
-                //await home.AddPropertyAsync("_xml", PremiseProperty.PremiseType.TypeText, true);
-
-                ////Load xml
-                //XDocument xdoc = XDocument.Parse(((dynamic)home)._xml);
-
-                ////Run query
-                //var objs = from obj in xdoc.Descendants("Object")
-                //           where
-                //               obj.Attribute("Class").Value.Contains("sys://Schema/Device")
-                //           select obj;
-
-                ////Loop through results
-                //foreach (var obj in objs) {
-                //    var properties = new List<PremiseProperty>();
-                //    var o = new PremiseObject(obj.Attribute("ID").Value);
-                //    o.PropertyChanged += (sender, args) => {
-                //        var val = ((PremiseObject)sender).GetMember(args.PropertyName);
-                //        Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
-                //    };
-
-                //    foreach (var att in obj.Attributes()) {
-                //        if (att.Name.ToString().Equals("ID")) continue;
-                //        if (att.Name.ToString().Equals("Class")) continue;
-                //        if (att.Name.ToString().Equals("Flags")) continue;
-                //        if (att.Name.ToString().Equals("OccupancyLastTrigger")) continue;
-                //        if (att.Name.ToString().Equals("OccupancyTimeTriggered")) continue;
-                //        if (att.Name.ToString().Equals("Script")) continue;
-                //        if (att.Name.ToString().Equals("BoundObject")) continue;
-                //        if (att.Name.ToString().Equals("TargetProperty")) continue;
-                //        Task tast = o.AddPropertyAsync(att.Name.ToString(), PremiseProperty.PremiseType.TypeText, true);
-                //    }
-                //}
-
-                var buttons = new KeypadButtons();
-                foreach (PremiseObject button in buttons) {
-                    button.PropertyChanged += (sender, args) => {
-                        var propName = PremiseProperty.NameFromItem(args.PropertyName);
-                        var val = ((PremiseObject)sender)[propName];
-                        Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
-                    };
-                }
-                buttons[0]["TriggerCommand"].Execute(null);
-                Thread.Sleep(1000);
-                buttons[0]["TriggerCommand"].Execute(null);
 
             }
             catch (System.Net.Sockets.SocketException socketException) {
@@ -223,6 +109,135 @@ namespace PremiseLib {
                 Console.WriteLine("RuntimeBinderException: {0}", be.Message);
             }
         }
+        
+        private async Task TestInvokeMethod() {
+            string s = await _server.InvokeMethodTaskAsync("sys://Home/Downstairs/Office", "CheckIsOfExplicitType(\"sys://Schema/Home/Location\")");
+            Console.WriteLine("Result: {0}", s);
+
+
+        }
+
+        private async Task TestSubscriptions() {
+            PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
+            ob.PropertyChanged += (sender, args) => {
+                var propName = PremiseProperty.NameFromItem(args.PropertyName);
+                var val = ((PremiseObject)sender)[propName];
+                Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
+            };
+
+            await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, false);
+            //await ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, false);
+
+            Thread.Sleep(1000);
+            await _server.Subscribe(ob, "Brightness");
+
+            //double d = 0.2;
+            //ob["Brightness"] = d;
+            //await _server.Unsubscribe(ob, "Brightness");
+            //Thread.Sleep(1);
+            //ob["Brightness"] = d = d + .1;
+            //Thread.Sleep(1);
+            //ob["Brightness"] = d = d + .1;
+            //Thread.Sleep(1);
+            //ob["Brightness"] = d = d + .1;
+            //Thread.Sleep(1);
+            //ob["Brightness"] = d = d + .1;
+            //Thread.Sleep(1);
+            //ob["Brightness"] = d = d + .1;
+            //Thread.Sleep(1000);
+            //ob["Brightness"] = d = d + .1;
+            //Thread.Sleep(1000);
+            //ob["Brightness"] = d = d + .1;
+
+            //Thread.Sleep(2000);
+            //await _server.Subscribe(ob, "Brightness");
+
+            //ob["Brightness"] = "33%";
+            ////((dynamic) ob).Brightness = ((dynamic) ob).Brightness + .25;
+        }
+
+        private async Task TestRecurringUpdate() {
+            //sys://Home/Admin/EqupTemp_VoltageSensor
+            PremiseObject voltage = await WatchObjectAsync("sys://Home/Admin/EqupTemp_VoltageSensor",
+                                                          new PremiseProperty("Name",
+                                                                              PremiseProperty.PremiseType.TypeText),
+                                                          new PremiseProperty("Voltage",
+                                                                              PremiseProperty.PremiseType.TypeFloat));
+            voltage.PropertyChanged += (sender, args) => {
+                //ob["Brightness = ((dynamic)voltage).Voltage / 2;
+                //((dynamic)office).Occupancy = !((dynamic)office).Occupancy;
+            };
+            string result = await _server.InvokeMethodTaskAsync("{A2214A6E-1A22-4A67-AEC7-CDB863C316BB}", "GetButtons()");
+            foreach (string s in result.Split(',')) {
+                await WatchObjectAsync(s,
+                    new PremiseProperty("Status", PremiseProperty.PremiseType.TypeBoolean),
+                    new PremiseProperty("Trigger", PremiseProperty.PremiseType.TypeBoolean));
+            }            
+        }
+
+        private async Task TestGetXML() {
+            //XmlDocument doc = new XmlDocument();
+            //doc.LoadXml(((dynamic)office)._xml);
+            //XmlNodeList nodes = doc.SelectNodes("//Object");
+            //foreach (XmlElement n in nodes) {
+            //    Console.WriteLine("{0} {1}", n.Attributes["ID"].Value, n.Attributes["Name"].Value);
+            //}
+
+            //// This can take a while with a lot of objects
+            //var home = new PremiseObject("sys://Home/Downstairs");
+            //home.PropertyChanged += (sender, args) => {
+            //    var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+            //    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+            //};
+
+            //await home.AddPropertyAsync("_xml", PremiseProperty.PremiseType.TypeText, true);
+
+            ////Load xml
+            //XDocument xdoc = XDocument.Parse(((dynamic)home)._xml);
+
+            ////Run query
+            //var objs = from obj in xdoc.Descendants("Object")
+            //           where
+            //               obj.Attribute("Class").Value.Contains("sys://Schema/Device")
+            //           select obj;
+
+            ////Loop through results
+            //foreach (var obj in objs) {
+            //    var properties = new List<PremiseProperty>();
+            //    var o = new PremiseObject(obj.Attribute("ID").Value);
+            //    o.PropertyChanged += (sender, args) => {
+            //        var val = ((PremiseObject)sender).GetMember(args.PropertyName);
+            //        Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, args.PropertyName, val);
+            //    };
+
+            //    foreach (var att in obj.Attributes()) {
+            //        if (att.Name.ToString().Equals("ID")) continue;
+            //        if (att.Name.ToString().Equals("Class")) continue;
+            //        if (att.Name.ToString().Equals("Flags")) continue;
+            //        if (att.Name.ToString().Equals("OccupancyLastTrigger")) continue;
+            //        if (att.Name.ToString().Equals("OccupancyTimeTriggered")) continue;
+            //        if (att.Name.ToString().Equals("Script")) continue;
+            //        if (att.Name.ToString().Equals("BoundObject")) continue;
+            //        if (att.Name.ToString().Equals("TargetProperty")) continue;
+            //        Task tast = o.AddPropertyAsync(att.Name.ToString(), PremiseProperty.PremiseType.TypeText, true);
+            //    }
+            //}            
+        }
+
+        private async Task TestCommandExecute() {
+            var buttons = new KeypadButtons();
+            foreach (PremiseObject button in buttons) {
+                button.PropertyChanged += (sender, args) => {
+                    var propName = PremiseProperty.NameFromItem(args.PropertyName);
+                    var val = ((PremiseObject)sender)[propName];
+                    Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
+                };
+            }
+            buttons[0]["TriggerCommand"].Execute(null);
+            Thread.Sleep(1000);
+            buttons[0]["TriggerCommand"].Execute(null);
+           
+        }
 
         private class KeypadButtons : ObservableCollection<dynamic> {
             public KeypadButtons() : base() {
@@ -238,6 +253,7 @@ namespace PremiseLib {
                 }
             }
         }
+
 
         // helper
         public async Task<PremiseObject> WatchObjectAsync(string location, params PremiseProperty[] properties) {

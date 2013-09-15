@@ -8,6 +8,8 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PremiseLib {
@@ -135,7 +137,8 @@ namespace PremiseLib {
                 // Assign the resulting task to a local variable to get around
                 // the compiler warning about not awaiting this.
                 // http://stackoverflow.com/questions/18577054/alternative-to-task-run-that-doesnt-throw-warning
-                Task task = Task.Run(() => ReadSubscriptionResponses());
+                //ThreadPool.QueueUserWorkItem(state => ReadSubscriptionResponses());
+                Task task = TaskEx.Run(() => ReadSubscriptionResponses());
 
                 // We do a GetValue so we know we have a good connection
                 if (await SendRequest("sys://Home?f??" + "Name")) {
@@ -184,7 +187,10 @@ namespace PremiseLib {
                 // look like HTTP POST responses.
                 while (_subscriptionClient != null) {
                     var line = await _subscriptionClient.ReadLineAsync();
-                    Debug.Assert(line != null);
+                    if (line == null) {
+                        Debug.WriteLine("ReadLineAsync returned null. This indicates the server has closed the socket.");
+                        break;
+                    }
                     Debug.WriteLine(line);
 
                     if (line.StartsWith("HTTP/1.1 ")) {
@@ -236,20 +242,17 @@ namespace PremiseLib {
                     // enforce this limit. 
                     switch (line) {
                         case "pauseConnection":
-                            Debug.WriteLine(line);
                             foreach (var subscription in _subscriptions) {
                                 subscription.Value.Active = false;
                             }
                             break;
                         case "resumeConnection":
-                            Debug.WriteLine(line);
                             foreach (var subscription in _subscriptions) {
                                 Task t = SendSubscriptionRequest(subscription.Value);
                             }
                             break;
                         case "fastMode":
                             FastMode = true;
-                            Debug.WriteLine(line);
                             break;
                         default:
                             // We got content!
@@ -364,16 +367,33 @@ namespace PremiseLib {
             }
         }
 
+        /// <summary>
+        /// The WebClient server expects HTTP requests like this
+        ///    POST /sys/command HTTP/1.1
+        ///    User-Agent: some user agent
+        ///    Host: hostname:port
+        ///    Connection: Keep-Alive
+        /// 
+        /// 'command' is of the form location?restOfCommand where
+        /// 'location' is the path to the object (e.g. Home/Downstairs)
+        /// 'restOfCommand' is the command and options (e.g. 'a?...')
+        /// 
+        /// If the URL does not start with '/sys/' Premise assumes
+        /// the client is requesting a static file from disk.
+        /// 
+        /// </summary>
         private async Task<Boolean> SendRequest(string command, string content = "") {
             try {
                 var uri = new Uri(GetUrlFromSysUri(command));
-                Debug.WriteLine("SendSubscriptionRequest: " + uri.PathAndQuery);
-
-                string requestString = "POST " + uri.PathAndQuery + " HTTP/1.1\r\n";
+                string requestString = "POST " + uri.LocalPath + uri.Query + " HTTP/1.1\r\n";
                 requestString += "User-Agent: PremiseServer .NET Client\r\n";
                 requestString += "Host: " + Host + ":" + Port + "\r\n";
                 requestString += "Connection: Keep-Alive\r\n";
-                requestString += "SYSConnector: true\r\n\r\n";
+                requestString += "Authorization: Basic ";
+                requestString += Convert.ToBase64String(Encoding.UTF8.GetBytes(Username + ":" + Password)) + "\r\n";
+                //requestString += "SYSConnector: true\r\n";
+                requestString += "\r\n";
+                Debug.WriteLine("SendSubscriptionRequest: " + requestString);
                 // Send the request.
                 Debug.Assert(_subscriptionClient != null);
                 bool b = false;

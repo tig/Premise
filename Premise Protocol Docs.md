@@ -130,11 +130,10 @@ This is a fire & forget request.
 
 SYSConnector uses HTTP `GET` for any request that does not include content in the request and `POST` for requests that include content (e.g. SetValue). This does not adhear to REST guidelines, but that's the way it is.
 
-SYSConnector requests look like this (SetValue example)
+SYSConnector requests look like this: 
 
-    POST HTTP/1.1
+    POST /sys/location?command HTTP/1.1
     User-Agent: SYSConnector/1.0 (WinNT)
-    SYSConnector: true
     Connection: Keep-Alive
     Cookie: <cookie>
     Content-Type: text/plain
@@ -142,7 +141,25 @@ SYSConnector requests look like this (SetValue example)
     
     <content>
 
-If you do not specify `Connection: Keep-Alive` then Premise will close the HTTP connection after each response. It is not clear what happens if you don't specify `SYSConnector` (it may have something to do with authentication). 
+If you do not specify `Connection: Keep-Alive` then Premise will close the HTTP connection after each response. 
+
+`User-Agent` can be anything. It is ignored by the server.
+
+The Premise WebClient server expects HTTP requests like this
+
+    POST /sys/command HTTP/1.1
+    User-Agent: some user agent
+    Host: hostname:port
+    Connection: Keep-Alive
+    Authorization: Basic authinfo 
+
+`command` is of the form `location?restOfCommand` where `location` is the path to the object (e.g. `Home/Downstairs`)
+
+`restOfCommand` is the command and options (e.g. `a?...`).  If the URL does not start with `/sys/` Premise assumes the client is requesting a static file from disk.
+
+`authinfo` is the standard encoding of the username and password per the HTTP Authorization header.  This is, of course, optional.
+
+***Note:*** The Premise webserver has a bug wherein URIs that are malformed do nothing. There is no HTTP error (e.g. 404) returned to the client and the socket remains open. This includes requesting static files that don't exist (e.g. `GET /badfile HTTP/1.1`) as well as when the format is wrong (e.g. leaving off the preceding `/` on `/sys/` as in `POST sys/location?command HTTP/1.1`).
     
 ## Normal Responses
 Responses are standard HTTP (except in "fast mode", described elsewhere). Generally of the form:

@@ -23,5 +23,5 @@
     <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
-  <MonoDevelop.Ide.ItemProperties.PremiseDroid AndroidDeviceId-Debug="192.168.0.108:5555" MonoForAntroid.PreferredDevice="3.7in WVGA (Nexus One)" />
+  <MonoDevelop.Ide.ItemProperties.PremiseDroid MonoForAntroid.PreferredDevice="3.7in WVGA (Nexus One)" />
 </Properties>
