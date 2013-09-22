@@ -3,8 +3,8 @@ Premise
 These are Charlie's Premise Home Control Software projects.
 
 ## Projects
-* **Premise WebClient Protocol Documentation** - A reverse engineered [documentation](https://github.com/tig/Premise/blob/master/Premise%20Protocol%20Docs.md) of the Premise protocol spoken between the SYSConnector ActiveX control and the Premise Server. 
-* **PremiseLib** - [Premise WebClient .NET Client Library Project](https://github.com/tig/Premise/tree/master/PremiseLib)
+* **Premise WebClient Protocol Documentation** - A reverse engineered [documentation](https://github.com/tig/Premise/blob/master/Premise%20WebClient%20Protocol.md) of the Premise protocol spoken between the SYSConnector ActiveX control and the Premise Server. 
+* **PremiseLib** - [Premise WebClient .NET Client Library Project](https://github.com/tig/Premise/tree/master/PremiseWebClient)
 * **PremiseWP** - Windows Phone 7/8 app. Not open source (yet).  
 
 ## More Info

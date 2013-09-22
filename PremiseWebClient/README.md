@@ -4,15 +4,15 @@ Premise WebClient .NET Client Library Project
 
 This project includes the following:
 
-* **Premise WebClient .NET Client Library** - A .NET library that should make it easy to build .NET apps that talk to Premise. Fully supports subscriptions so polling is not needed. [Access source here.](https://github.com/tig/Premise/tree/master/PremiseLib/PremiseLib).
-* **pr** - A simple command line tool that makes it easy to exercise the client library. [Source](https://github.com/tig/Premise/tree/master/PremiseLib/pr)
+* **Premise WebClient .NET Client Library** - A .NET library that should make it easy to build .NET apps that talk to Premise. Fully supports subscriptions so polling is not needed. 
+* **pr** - A simple command line tool that makes it easy to exercise the client library. 
 
 ## Premise WebClient .NET Client Library
 *A .NET library for accessing Premise from .NET.*
 
-The **Premise WebClient .NET Client Library** makes it easy to build .NET apps that talk to Premise. It supports the entire [Premise WebClient Protocol](https://github.com/tig/Premise/blob/master/Premise%20Protocol%20Docs.md) including subscriptions so polling is not needed. See README.md in that project for more details. 
+The **Premise WebClient .NET Client Library** makes it easy to build .NET apps that talk to Premise. It supports the entire [Premise WebClient Protocol](https://github.com/tig/Premise/blob/master/Premise%20WebClient%20Protocol.md) including subscriptions so polling is not needed. See README.md in that project for more details. 
 
-The client is written in C# 4.5 (Visual Studio 2012) and makes heavy use of one feature that may or may not be portable to other platforms: `async / await`. I intend to make this library work on ASP.NET, Windows Phone, Windows 8, Android (Xamarin), and iOS (Xamarin). So far it has only been used in a console app and on Windows 8/WinRT.
+The client is written in C# 4.5 (Visual Studio 2012) and the library is built as .NET Portable Class Library (PCL) so it should work on ASP.NET, Windows Phone 7/8, Windows 8, Android (Xamarin), and iOS (Xamarin). 
 
 ### Example Usage
 This example illustrates connecting to a device (a light in my home office). It shows subscribing to both the `Brightness` properties and shows setting properties.
