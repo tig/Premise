@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>PremiseWebClient</id>
+    <version>1.0.2-beta</version>
+    <title>Premise WebClient Library</title>
+    <authors>Charlie Kindel</authors>
+    <owners>Charlie Kindel</owners>
+    <licenseUrl>https://github.com/tig/Premise/blob/master/PremiseWebClient/license.txt</licenseUrl>
+    <projectUrl>https://github.com/tig/Premise/tree/master/PremiseWebClient</projectUrl>
+    <iconUrl>https://raw.github.com/tig/Premise/master/PremiseWebClient/Lib/nuget/Home.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The Premise WebClient .NET Client Library makes it easy to build .NET apps that talk to Premise. It supports the entire Premise WebClient Protocol including subscriptions so polling is not needed. See README.md in that project for more details.
+
+The client is written in C# 4.5 (Visual Studio 2012) and the library is built as .NET Portable Class Library (PCL) so it should work on ASP.NET, Windows Phone 7/8, Windows 8, Android (Xamarin), and iOS (Xamarin).</description>
+    <summary>A .NET library for accessing Premise from .NET.</summary>
+    <releaseNotes>First nuget push.</releaseNotes>
+    <copyright>Copyright © 2013 Kindel Systems</copyright>
+    <language />
+    <tags>premise</tags>
+    <dependencies>
+      <group targetFramework=".NETPortable0.0-net40+sl40+wp70+win80">
+        <dependency id="Microsoft.Bcl.Async" version="1.0.16" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>
