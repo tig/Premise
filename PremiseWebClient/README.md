@@ -14,6 +14,15 @@ The **Premise WebClient .NET Client Library** makes it easy to build .NET apps t
 
 The client is written in C# 4.5 (Visual Studio 2012) and the library is built as .NET Portable Class Library (PCL) so it should work on ASP.NET, Windows Phone 7/8, Windows 8, Android (Xamarin), and iOS (Xamarin). 
 
+### Installation
+To add the PremiseWebClient library to your .NET, Windows Phone, or Windows 8 project use NuGet.
+
+From the command line:
+
+    PM> Install-Package PremiseWebClient -Pre
+
+Or use "Manage NuGet Packages" in Visual Studio.
+
 ### Example Usage
 This example illustrates connecting to a device (a light in my home office). It shows subscribing to both the `Brightness` properties and shows setting properties.
 
