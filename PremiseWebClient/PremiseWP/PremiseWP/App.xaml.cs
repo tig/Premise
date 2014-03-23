@@ -1,32 +1,68 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.IO.IsolatedStorage;
 using System.Resources;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Navigation;
+using System.Xml.Serialization;
 using Microsoft.Phone.Controls;
 using Microsoft.Phone.Shell;
 using PremiseWP.Resources;
 using PremiseWP.ViewModels;
+using PremiseWebClient;
 
 namespace PremiseWP {
-    public partial class App : Application {
-        private static MainViewModel viewModel = null;
+    public partial class App {
+        private static MainViewModel _mainViewModel;
 
         /// <summary>
         /// A static ViewModel used by the views to bind against.
         /// </summary>
         /// <returns>The MainViewModel object.</returns>
-        public static MainViewModel ViewModel {
+        public static MainViewModel MainViewModel {
             get {
                 // Delay creation of the view model until necessary
-                if (viewModel == null)
-                    viewModel = new MainViewModel();
-
-                return viewModel;
+                return _mainViewModel ?? (_mainViewModel = new MainViewModel());
             }
         }
 
+        private static GarageDoorsViewModel _gdoViewModel;
+        /// <summary>
+        /// A static ViewModel used by the views to bind against.
+        /// </summary>
+        /// <returns>The GarageDoorsViewModel object.</returns>
+        public static GarageDoorsViewModel GarageDoorsViewModel {
+            get {
+                // Delay creation of the view model until necessary
+                return _gdoViewModel ?? (_gdoViewModel = new GarageDoorsViewModel());
+            }
+        }
+
+        private static LightsViewModel _lightsViewModel;
+        /// <summary>
+        /// A static ViewModel used by the views to bind against.
+        /// </summary>
+        /// <returns>The LightsViewModel object.</returns>
+        public static LightsViewModel LightsViewModel {
+            get {
+                // Delay creation of the view model until necessary
+                return _lightsViewModel ?? (_lightsViewModel = new LightsViewModel());
+            }
+        }
+
+        private static SettingsViewModel _settingsViewModel;
+        /// <summary>
+        /// A static ViewModel used by the views to bind against.
+        /// </summary>
+        /// <returns>The SettingsViewModel object.</returns>
+        public static SettingsViewModel SettingsViewModel {
+            get {
+                // Delay creation of the view model until necessary
+                return _settingsViewModel ?? (_settingsViewModel = new SettingsViewModel());
+            }
+        }
         /// <summary>
         /// Provides easy access to the root frame of the Phone Application.
         /// </summary>
@@ -40,6 +76,10 @@ namespace PremiseWP {
             // Global handler for uncaught exceptions.
             UnhandledException += Application_UnhandledException;
 
+            PremiseServer.Instance.Notifier = new WPIPremiseNotify();
+            PremiseServer.Instance.FastMode = true;
+
+
             // Standard XAML initialization
             InitializeComponent();
 
@@ -52,7 +92,7 @@ namespace PremiseWP {
             // Show graphics profiling information while debugging.
             if (Debugger.IsAttached) {
                 // Display the current frame rate counters.
-                Application.Current.Host.Settings.EnableFrameRateCounter = true;
+                Current.Host.Settings.EnableFrameRateCounter = true;
 
                 // Show the areas of the app that are being redrawn in each frame.
                 //Application.Current.Host.Settings.EnableRedrawRegions = true;
@@ -71,27 +111,55 @@ namespace PremiseWP {
 
         // Code to execute when the application is launching (eg, from Start)
         // This code will not execute when the application is reactivated
-        private void Application_Launching(object sender, LaunchingEventArgs e) {
+        private async void Application_Launching(object sender, LaunchingEventArgs e) {
+            Settings settings = Settings.LoadSettings(true);
+            PremiseServer.Instance.Host = settings.Host;
+            PremiseServer.Instance.Port = settings.Port;
+            PremiseServer.Instance.Ssl = settings.Ssl;
+            PremiseServer.Instance.Username = settings.Username;
+            PremiseServer.Instance.Password = settings.Password;
         }
 
         // Code to execute when the application is activated (brought to foreground)
         // This code will not execute when the application is first launched
-        private void Application_Activated(object sender, ActivatedEventArgs e) {
+        private async void Application_Activated(object sender, ActivatedEventArgs e) {
             // Ensure that application state is restored appropriately
-            if (!App.ViewModel.IsDataLoaded) {
-                App.ViewModel.LoadData();
+            if (!App.MainViewModel.Connected) {
+                Settings settings = Settings.LoadSettings(true);
+                PremiseServer.Instance.Host = settings.Host;
+                PremiseServer.Instance.Port = settings.Port;
+                PremiseServer.Instance.Ssl = settings.Ssl;
+                PremiseServer.Instance.Username = settings.Username;
+                PremiseServer.Instance.Password = settings.Password;
+                App.MainViewModel.LoadData();
             }
         }
 
         // Code to execute when the application is deactivated (sent to background)
         // This code will not execute when the application is closing
         private void Application_Deactivated(object sender, DeactivatedEventArgs e) {
+            PremiseServer.Instance.StopSubscriptions();
             // Ensure that required application state is persisted here.
+            Settings settings = new Settings();
+            settings.Host = PremiseServer.Instance.Host;
+            settings.Port = PremiseServer.Instance.Port;
+            settings.Ssl = PremiseServer.Instance.Ssl;
+            settings.Username = PremiseServer.Instance.Username;
+            settings.Password = PremiseServer.Instance.Password;
+            Settings.SaveSettings(false, settings);
         }
 
         // Code to execute when the application is closing (eg, user hit Back)
         // This code will not execute when the application is deactivated
         private void Application_Closing(object sender, ClosingEventArgs e) {
+            PremiseServer.Instance.StopSubscriptions();
+            Settings settings = new Settings();
+            settings.Host = PremiseServer.Instance.Host;
+            settings.Port = PremiseServer.Instance.Port;
+            settings.Ssl = PremiseServer.Instance.Ssl;
+            settings.Username = PremiseServer.Instance.Username;
+            settings.Password = PremiseServer.Instance.Password;
+            Settings.SaveSettings(true, settings);
         }
 
         // Code to execute if a navigation fails
@@ -110,14 +178,15 @@ namespace PremiseWP {
             }
         }
 
+
         #region Phone application initialization
 
         // Avoid double-initialization
-        private bool phoneApplicationInitialized = false;
+        private bool _phoneApplicationInitialized = false;
 
         // Do not add any additional code to this method
         private void InitializePhoneApplication() {
-            if (phoneApplicationInitialized)
+            if (_phoneApplicationInitialized)
                 return;
 
             // Create the frame but don't set it as RootVisual yet; this allows the splash
@@ -132,7 +201,7 @@ namespace PremiseWP {
             RootFrame.Navigated += CheckForResetNavigation;
 
             // Ensure we don't initialize again
-            phoneApplicationInitialized = true;
+            _phoneApplicationInitialized = true;
         }
 
         // Do not add any additional code to this method

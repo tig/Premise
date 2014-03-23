@@ -93,7 +93,8 @@ namespace pr {
                 await _server.StartSubscriptionsAsync(new PremiseTcpClientSocket());
                 _server.FastMode = fastmode;
 
-                await TestSubscriptions();
+                // Don't await to prove that it works async.
+                TestSubscriptions();
 
                 await TestRecurringUpdate();
 
@@ -103,7 +104,7 @@ namespace pr {
 
                 await TestInvokeMethod();
 
-
+                TestGetLights();
 
             }
             catch (System.Net.Sockets.SocketException socketException) {
@@ -140,14 +141,14 @@ namespace pr {
                 Console.WriteLine("TestSubscriptions {0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
             };
 
-            await ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, false);
-            //await ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, false);
+            ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
+            ob.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, false);
 
-            Thread.Sleep(1000);
-            await _server.Subscribe(ob, "Brightness");
+            //Thread.Sleep(1000);
+            _server.Subscribe(ob, "PowerState");
 
-            //double d = 0.2;
-            //ob["Brightness"] = d;
+            double d = 0;
+            ob["Brightness"] = d;
             //await _server.Unsubscribe(ob, "Brightness");
             //Thread.Sleep(1);
             //ob["Brightness"] = d = d + .1;
@@ -183,6 +184,11 @@ namespace pr {
             //    var val = ((PremiseObject)sender)[propName];
             //    Console.WriteLine("TestRecurringUpdate {0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
             //};
+        }
+
+        private async Task TestGetLights() {
+            string s = await _server.InvokeMethodTaskAsync("sys://Home/Admin/WebClientMethods", "GetLights(\"sys://Home/Downstairs/Office\")");
+            Console.WriteLine("Result: {0}", s);
         }
 
         private async Task TestGetXML() {

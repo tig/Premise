@@ -10,7 +10,7 @@ using System.Windows.Threading;
 using Windows.ApplicationModel.Core;
 using Windows.UI.Core;
 
-namespace PremiseLib {
+namespace PremiseWebClient {
     public class WPIPremiseNotify : IPremiseNotify {
 
         public void DispatchSetMember(PremiseObject obj, string propertyName, string value) {

@@ -1,7 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PremiseWP", "PremiseWP\PremiseWP.csproj", "{DF1B5A6D-0B89-4770-B568-DF60B6E21DCB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PremiseWebClient", "..\Lib\PremiseWebClient\PremiseWebClient.csproj", "{88A57AAC-25E5-4089-BA2A-730F916796F4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +35,14 @@ Global
 		{DF1B5A6D-0B89-4770-B568-DF60B6E21DCB}.Release|x86.ActiveCfg = Release|x86
 		{DF1B5A6D-0B89-4770-B568-DF60B6E21DCB}.Release|x86.Build.0 = Release|x86
 		{DF1B5A6D-0B89-4770-B568-DF60B6E21DCB}.Release|x86.Deploy.0 = Release|x86
+		{88A57AAC-25E5-4089-BA2A-730F916796F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88A57AAC-25E5-4089-BA2A-730F916796F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88A57AAC-25E5-4089-BA2A-730F916796F4}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{88A57AAC-25E5-4089-BA2A-730F916796F4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{88A57AAC-25E5-4089-BA2A-730F916796F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88A57AAC-25E5-4089-BA2A-730F916796F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88A57AAC-25E5-4089-BA2A-730F916796F4}.Release|ARM.ActiveCfg = Release|Any CPU
+		{88A57AAC-25E5-4089-BA2A-730F916796F4}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

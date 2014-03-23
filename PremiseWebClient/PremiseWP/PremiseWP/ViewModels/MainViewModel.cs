@@ -2,13 +2,27 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Input;
-using PremiseLib;
+using PremiseWebClient;
 using PremiseWP.Resources;
 
 namespace PremiseWP.ViewModels {
     public class MainViewModel : INotifyPropertyChanged {
         public MainViewModel() {
+            Server.PropertyChanged += (sender, args) => {
+                if (args.PropertyName == "Connected") {
+                    Debug.WriteLine("Connected: {0}", Server.Connected);
+                    if (PremiseServer.Instance.Connected) {
+                        Home = new PremiseObject("sys://Home");
+                        Home.AddPropertyAsync("DisplayName", PremiseProperty.PremiseType.TypeText, true);
+                    }
+                    else {
+                        
+                    }
+                }
+                Connected = PremiseServer.Instance.Connected;
+            };
             this.Items = new ObservableCollection<PremiseObject>();
         }
 
@@ -17,45 +31,79 @@ namespace PremiseWP.ViewModels {
         /// </summary>
         public ObservableCollection<PremiseObject> Items { get; private set; }
 
-        public bool IsDataLoaded {
-            get;
-            private set;
+        public bool Connected {
+            get { return Server.Connected;  }
+            set {
+                NotifyPropertyChanged("Connected");
+            }
+        }
+
+        public PremiseServer Server {
+            get { return PremiseServer.Instance; }
+            set {
+                NotifyPropertyChanged("Server");
+            }
+        }
+
+        private PremiseObject _home;
+        public PremiseObject Home {
+            get { return _home; }
+            set {
+                _home = value;
+                NotifyPropertyChanged("Home");
+            }
         }
 
         /// <summary>
         /// Creates and adds a few ItemViewModel objects into the Items collection.
         /// </summary>
         public async void LoadData() {
+            try {
+                Items.Clear();
 
-            PremiseServer.Instance.Notifier = new WPIPremiseNotify();
-            PremiseServer.Instance.Host = "home.kindel.net";
-            PremiseServer.Instance.Port = 86;
-            PremiseServer.Instance.Username = "";
-            PremiseServer.Instance.Password = "";
-            PremiseServer.Instance.PropertyChanged += async (sender, args) => {
-                if (args.PropertyName == "Connected" && PremiseServer.Instance.Connected == true) {
-                    Debug.WriteLine("Yo! Connected!!");
-                }
-                if (args.PropertyName == "Connected" && PremiseServer.Instance.Connected == false)
-                    Debug.WriteLine("Disconnected!");
-            };
-            await PremiseServer.Instance.StartSubscriptionsAsync(new StreamSocketPremiseSocket());
+                //PremiseObject o = new PremiseObject("sys://Home/Upstairs/Garage/West Garage Door");
+                //await o.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+                //await o.AddPropertyAsync("GarageDoorStatus", PremiseProperty.PremiseType.TypeText, true);
+                //await o.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
+                //this.Items.Add(o);
 
-            PremiseObject o1 = new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Desk");
-            await o1.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
-            await o1.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
-            await o1.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
-            this.Items.Add(o1);
+                //o = new PremiseObject("sys://Home/Upstairs/Garage/East Garage Door");
+                //await o.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+                //await o.AddPropertyAsync("GarageDoorStatus", PremiseProperty.PremiseType.TypeText, true);
+                //await o.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
+                //this.Items.Add(o);
 
-            PremiseObject o2 = new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Workshop");
-            await o2.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
-            await o2.AddPropertyAsync("Status", PremiseProperty.PremiseType.TypeBoolean, true);
-            await o2.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
-            this.Items.Add(o2);
+                //o = new PremiseObject("sys://Home/Upper Garage/West Garage Door");
+                //await o.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+                //await o.AddPropertyAsync("GarageDoorStatus", PremiseProperty.PremiseType.TypeText, true);
+                //await o.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
+                //this.Items.Add(o);
 
-            ((ICommand)o2["TriggerCommand"]).Execute(null);
+                //o = new PremiseObject("sys://Home/Upper Garage/Center Garage Door");
+                //await o.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+                //await o.AddPropertyAsync("GarageDoorStatus", PremiseProperty.PremiseType.TypeText, true);
+                //await o.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
+                //this.Items.Add(o);
 
-            this.IsDataLoaded = true;
+                //o = new PremiseObject("sys://Home/Upper Garage/East Garage Door");
+                //await o.AddPropertyAsync("Description", PremiseProperty.PremiseType.TypeText);
+                //await o.AddPropertyAsync("GarageDoorStatus", PremiseProperty.PremiseType.TypeText, true);
+                //await o.AddPropertyAsync("Trigger", PremiseProperty.PremiseType.TypeBoolean);
+                //this.Items.Add(o);
+
+                //((ICommand)o2["TriggerCommand"]).Execute(null);
+            }
+            catch (Exception ex) {
+                Debug.WriteLine("MainViewModel.LoadData: " + ex.Message);
+            }
+        }
+
+        public async void Disconnect() {
+            try {
+                Server.StopSubscriptions();
+            } catch (Exception ex) {
+                Debug.WriteLine("MainViewModel.LoadData: " + ex.Message);
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

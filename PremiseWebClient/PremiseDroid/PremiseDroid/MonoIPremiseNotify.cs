@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Windows;
 using Android.App;
+using PremiseWebClient;
 
 namespace PremiseLib {
     public class MonoIPremiseNotify : Activity, IPremiseNotify {

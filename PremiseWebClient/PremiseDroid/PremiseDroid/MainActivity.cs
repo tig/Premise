@@ -8,6 +8,8 @@ using Android.OS;
 using PremiseLib;
 using System.Net;
 using System.IO;
+using PremiseWebClient;
+using pr;
 
 namespace PremiseDroid
 {
@@ -50,8 +52,8 @@ namespace PremiseDroid
 
 			_server.Host = "192.168.0.2";
 			_server.Port = 86;
-			_server.Username = "";
-			_server.Password = "";			
+			_server.Username = "tester";
+			_server.Password = "testtest";			
 			_server.PropertyChanged += (sender, args) => {
 				if (args.PropertyName == "Error" && _server.Error) {
 					Console.WriteLine ("Error communicating with {0}", _server.Host);
@@ -70,11 +72,11 @@ namespace PremiseDroid
 				await _server.StartSubscriptionsAsync(new PremiseTcpClientSocket());
 				_server.FastMode = true;
 
-				AddGDO("sys://Home/Upstairs/Garage/West Garage Door", textLowerWest, textLowerWestStatus, buttonLowerWest);
-				AddGDO("sys://Home/Upstairs/Garage/East Garage Door", textLowerEast, textLowerEastStatus, buttonLowerEast);
-				AddGDO("sys://Home/Upper Garage/West Garage Door", textUpperWest, textUpperWestStatus, buttonUpperWest);
-				AddGDO("sys://Home/Upper Garage/Center Garage Door", textUpperCenter, textUpperCenterStatus, buttonUpperCenter);
-				AddGDO("sys://Home/Upper Garage/East Garage Door", textUpperEast, textUpperEastStatus, buttonUpperEast);
+				//AddGDO("sys://Home/Upstairs/Garage/West Garage Door", textLowerWest, textLowerWestStatus, buttonLowerWest);
+				//AddGDO("sys://Home/Upstairs/Garage/East Garage Door", textLowerEast, textLowerEastStatus, buttonLowerEast);
+				//AddGDO("sys://Home/Upper Garage/West Garage Door", textUpperWest, textUpperWestStatus, buttonUpperWest);
+				//AddGDO("sys://Home/Upper Garage/Center Garage Door", textUpperCenter, textUpperCenterStatus, buttonUpperCenter);
+				//AddGDO("sys://Home/Upper Garage/East Garage Door", textUpperEast, textUpperEastStatus, buttonUpperEast);
 
 			}
 			catch (System.Net.Sockets.SocketException socketException) {

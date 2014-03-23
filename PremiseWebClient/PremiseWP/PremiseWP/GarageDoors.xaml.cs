@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Windows.Navigation;
 using Microsoft.Phone.Controls;
+using Microsoft.Phone.Shell;
 using PremiseWebClient;
 
 namespace PremiseWP {
-    public partial class MainPage : PhoneApplicationPage {
-        // Constructor
-        public MainPage() {
+    public partial class GarageDoors  {
+        public GarageDoors() {
             InitializeComponent();
 
             // Set the data context of the LongListSelector control to the sample data
-            DataContext = App.MainViewModel;
+            DataContext = App.GarageDoorsViewModel;
 
             // Sample code to localize the ApplicationBar
             //BuildLocalizedApplicationBar();
@@ -20,20 +20,19 @@ namespace PremiseWP {
         protected async override void OnNavigatedTo(NavigationEventArgs e) {
             if (!PremiseServer.Instance.Connected) {
                 await PremiseServer.Instance.StartSubscriptionsAsync(new StreamSocketPremiseSocket());
-            }
-            App.MainViewModel.LoadData();
-        }
-        private void Settings_Click(object sender, EventArgs e) {
-            NavigationService.Navigate(new Uri("/SettingsPage.xaml", UriKind.Relative));
+            } 
+            App.GarageDoorsViewModel.LoadData();
         }
 
-        private void Refresh_Click(object sender, EventArgs e) {
-            App.MainViewModel.LoadData();
+        private void PinToStart(object sender, EventArgs e) {
+            var newTile = new StandardTileData {
+                Title = "Garage Doors",
+                BackgroundImage = new Uri("/Assets/Tiles/garage_icon_173.png", UriKind.Relative),
+            };
+
+            ShellTile.Create(new Uri("/GarageDoors.xaml?state=From a Live Tile", UriKind.Relative), newTile);
         }
 
-        private void Disconnect_Click(object sender, EventArgs e) {
-            App.MainViewModel.Disconnect();
-        }
 
         // Sample code for building a localized ApplicationBar
         //private void BuildLocalizedApplicationBar()

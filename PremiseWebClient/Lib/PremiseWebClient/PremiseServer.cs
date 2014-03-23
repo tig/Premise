@@ -5,10 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PremiseWebClient {
@@ -37,11 +39,7 @@ namespace PremiseWebClient {
         // implementation does no dispatching.
         private IPremiseNotify _notifier;
         public IPremiseNotify Notifier {
-            get {
-                if (_notifier == null) 
-                    _notifier = this;
-                return _notifier;
-            }
+            get { return _notifier ?? (_notifier = this); }
             set {
                 _notifier = value;
             }
@@ -57,17 +55,18 @@ namespace PremiseWebClient {
         private class Subscription {
             public PremiseObject Object;
             public String PropertyName;
+            public Task RequestTask;
             public bool Active;
         }
 
-        private Dictionary<int, Subscription> _subscriptions = new Dictionary<int, Subscription>();
-        private IPremiseSocket _subscriptionClient = null;
+        private readonly Dictionary<int, Subscription> _subscriptions = new Dictionary<int, Subscription>();
+        private IPremiseSocket _subscriptionClient;
 
         public string Host, Username, Password;
         public int Port;
-        public bool SSL;
+        public bool Ssl;
 
-        private bool _Connected = false;
+        private bool _connected;
 
         /// <summary>
         /// True if the subscription socket has successfully 
@@ -75,16 +74,16 @@ namespace PremiseWebClient {
         /// False if the connection is closed.
         /// </summary>
         public bool Connected {
-            get { return _Connected; }
+            get { return _connected; }
 
             set {
-                if (value == _Connected) return;
-                _Connected = value;
+                if (value == _connected) return;
+                _connected = value;
                 Notifier.OnPropertyChanged(this, PropertyChanged);
             }
         }
 
-        private bool _error = false;
+        private bool _error;
 
         public bool Error {
             get { return _error; }
@@ -96,14 +95,58 @@ namespace PremiseWebClient {
             }
         }
 
-        public string LastStatusCode;
-        public string LastError;
-        public string LastResponsePhrase;
-        public string LastConnection;
-        public string LastErrorContentType;
-        public string LastErrorContent;
+        private string _lastStatusCode;
+        public string LastStatusCode {
+            get { return _lastStatusCode; }
 
-        private bool _FastMode = false;
+            set {
+                if (value == _lastStatusCode) return;
+                _lastStatusCode = value;
+                Notifier.OnPropertyChanged(this, PropertyChanged);
+            }
+        }
+
+        private string _lastError;
+        public string LastError {
+            get { return _lastError; }
+
+            set {
+                if (value == _lastError) return;
+                _lastError = value;
+                Notifier.OnPropertyChanged(this, PropertyChanged);
+            }
+        }
+        private string _lastResponsePhrase;
+        public string LastResponsePhrase {
+            get { return _lastResponsePhrase; }
+
+            set {
+                if (value == _lastResponsePhrase) return;
+                _lastResponsePhrase = value;
+                Notifier.OnPropertyChanged(this, PropertyChanged);
+            }
+        }
+        private string _lastConnection;
+        public string LastConnection {
+            get { return _lastConnection; }
+
+            set {
+                if (value == _lastConnection) return;
+                _lastConnection = value;
+                Notifier.OnPropertyChanged(this, PropertyChanged);
+            }
+        }        public string LastErrorContentType;
+        private string _lastErrorContent;
+        public string LastErrorContent {
+            get { return _lastErrorContent; }
+
+            set {
+                if (value == _lastErrorContent) return;
+                _lastErrorContent = value;
+                Notifier.OnPropertyChanged(this, PropertyChanged);
+            }
+        }
+        private bool _fastMode;
 
         /// <summary>
         /// Enable FastMode for the subscription socket.
@@ -113,39 +156,56 @@ namespace PremiseWebClient {
         /// FastMode.
         /// </summary>
         public bool FastMode {
-            get { return _FastMode; }
+            get { return _fastMode; }
 
             set {
-                if (value == _FastMode) return;
-                _FastMode = true;
+                if (value == _fastMode) return;
+                _fastMode = true;
                 EnableFastMode();
                 Notifier.OnPropertyChanged(this, PropertyChanged);
             }
         }
 
+        private CancellationTokenSource _readCts;
+
         /// <summary>
         /// StartSubscriptionsAsync must be called if you want subscription change notifications.
         /// This starts the subscription engine. We always create one subscription for
-        /// Home DisplayName to start (but ignore any updates).
+        /// Home.Name to start (but ignore any updates).
         /// </summary>
         public async Task StartSubscriptionsAsync(IPremiseSocket premiseSocket) {
             try {
+                // Always stop the previous subscription client first
+                StopSubscriptions();
+
+                if (_readCts != null) {
+                    // If we've just cancelled the connection and are reconnecting
+                    // we need to wait a bit for the socket to be closed.
+                    if (_readCts.IsCancellationRequested)
+                        await TaskEx.Delay(1000);
+                    _readCts.Dispose();
+                }
+                _readCts = new CancellationTokenSource();
+
                 _subscriptionClient = premiseSocket;
-                await _subscriptionClient.ConnectAsync(Host, Port, SSL, Username, Password);
+                Debug.WriteLine("Connecting to IPremiseSocket");
+                await _subscriptionClient.ConnectAsync(Host, Port, Ssl, Username, Password);
+                Debug.WriteLine("Connected to socket");
+                Error = false;
+                LastError = "";
+                LastErrorContent = "";
 
                 // Assign the resulting task to a local variable to get around
                 // the compiler warning about not awaiting this.
                 // http://stackoverflow.com/questions/18577054/alternative-to-task-run-that-doesnt-throw-warning
                 //ThreadPool.QueueUserWorkItem(state => ReadSubscriptionResponses());
-                var task = TaskEx.Run(() => ReadSubscriptionResponses());
+                var readTask = Task.Factory.StartNew(ReadSubscriptionResponses, _readCts.Token);
 
                 // We do a GetValue so we know we have a good connection
                 if (await SendRequest("sys://Home?f??" + "Name")) {
-
                     if (FastMode) EnableFastMode();
-
                     foreach (var subscription in _subscriptions) {
-                        Task t = SendSubscriptionRequest(subscription.Value);
+                        subscription.Value.RequestTask = SendSubscriptionRequest(subscription.Value);
                     }
                 }
                 else {
@@ -153,9 +213,12 @@ namespace PremiseWebClient {
                 }
             }
             catch (Exception ex) {
-                Debug.WriteLine(ex.ToString());
+                Debug.WriteLine("StartSubscriptionAsync: " + ex);
+                Error = true;
+                LastError = ex.GetType().ToString();
+                LastErrorContent = ex.Message;
                 Dispose();
-                throw ex;
+                throw;
             }
         }
 
@@ -164,10 +227,11 @@ namespace PremiseWebClient {
         /// "forgotten". There's no need to actively unsubscribe them.
         /// </summary>
         public void StopSubscriptions() {
+            Debug.WriteLine("StopSubscriptions");
+            Dispose();
             foreach (var subscription in _subscriptions) {
                 subscription.Value.Active = false;
             }
-            Dispose();
         }
 
         /// <summary>
@@ -179,15 +243,19 @@ namespace PremiseWebClient {
         private async void ReadSubscriptionResponses() {
             try {
                 // Process the response.
-                int contentLength;
                 int hashCode = 0;
 
                 // From here on we will get responses on the stream that
                 // look like HTTP POST responses.
                 while (_subscriptionClient != null) {
+                    _readCts.Token.ThrowIfCancellationRequested(); 
+                    
                     var line = await _subscriptionClient.ReadLineAsync();
+
+                    _readCts.Token.ThrowIfCancellationRequested();
+                    
                     if (line == null) {
-                        Debug.WriteLine("ReadLineAsync returned null. This indicates the server has closed the socket.");
+                        Debug.WriteLine("ReadLineAsync returned null. This indicates the server has closed the socket?");
                         break;
                     }
                     Debug.WriteLine(line);
@@ -199,8 +267,8 @@ namespace PremiseWebClient {
                         if (!statusCode.StartsWith("2")) {
                             Debug.WriteLine("Error: " + line);
                             await ParseErrorResponse();
-                            Dispose();
                             Error = true;
+                            Dispose();
                             break;
                         }
                     }
@@ -213,6 +281,7 @@ namespace PremiseWebClient {
                     }
 
                     // Content-Length: is always the last HTTP header Premise sends
+                    int contentLength;
                     if (!line.StartsWith("Content-Length: ") ||
                         !int.TryParse(line.Substring("Content-Length: ".Length), out contentLength)) continue;
 
@@ -256,7 +325,7 @@ namespace PremiseWebClient {
                         default:
                             // We got content!
                             // Find the property this response belongs to and update it
-                            Subscription sub = null;
+                            Subscription sub;
                             if (_subscriptions.TryGetValue(hashCode, out sub))
                                 Notifier.DispatchSetMember(sub.Object, sub.PropertyName, line);
                             break;
@@ -264,12 +333,15 @@ namespace PremiseWebClient {
                 }
             }
             catch (Exception ex) {
-                Debug.WriteLine("ReadSubscriptionResponse: " + ex.ToString());
+                if (!_readCts.IsCancellationRequested) {
+                    Debug.WriteLine("ReadSubscriptionResponse: " + ex.Message);
+                    LastError = ex.GetType().ToString();
+                    LastErrorContent = ex.Message;
+                    Error = true;
+                }
                 Dispose();
-                throw ex;
             }
             Debug.WriteLine("Subscription socket closed.");
-            Connected = false;
             Dispose();
         }
 
@@ -277,6 +349,7 @@ namespace PremiseWebClient {
             try {
                 int contentLength = 0;
                 while (_subscriptionClient != null) {
+                    _readCts.Token.ThrowIfCancellationRequested(); 
                     var line = await _subscriptionClient.ReadLineAsync();
                     Debug.Assert(line != null);
                     Debug.WriteLine(line);
@@ -311,7 +384,7 @@ namespace PremiseWebClient {
             }
             catch (Exception ex) {
                 Dispose();
-                throw ex;
+                throw;
             }
         }
 
@@ -322,28 +395,31 @@ namespace PremiseWebClient {
         /// <param name="propertyName">Name of the property to subscribe.</param>
         public async Task Subscribe(PremiseObject po, string propertyName) {
             try {
-                Debug.Assert(_subscriptionClient != null);
-
+                _readCts.Token.ThrowIfCancellationRequested();
                 // Ignore multiple subscripitons
-                foreach (var subscription in _subscriptions) {
-                    if (subscription.Value.PropertyName == propertyName &&
-                        subscription.Value.Object.Location == po.Location)
-                        return;
+                if (_subscriptions.Any(subscription => subscription.Value.PropertyName == propertyName &&
+                                                       subscription.Value.Object.Location == po.Location)) {
+                    return;
                 }
 
-                Subscription sub = new Subscription {Object = po, PropertyName = propertyName};
+                var sub = new Subscription {Object = po, PropertyName = propertyName};
                 _subscriptions.Add(sub.GetHashCode(), sub);
                 await SendSubscriptionRequest(sub);
 
             }
             catch (Exception ex) {
+                Debug.WriteLine("Subscribe: " + ex);
+                Error = true;
+                LastError = ex.GetType().ToString();
+                LastErrorContent = ex.Message;
                 Dispose();
-                throw ex;
+                throw;
             }
         }
 
         private async Task SendSubscriptionRequest(Subscription sub) {
             try {
+                _readCts.Token.ThrowIfCancellationRequested();
                 if (String.IsNullOrEmpty(sub.Object.Location)) return;
                 // We send as <object>?a?<hashcode>??<property>?<hashcode>?
                 //
@@ -362,7 +438,7 @@ namespace PremiseWebClient {
             }
             catch (Exception ex) {
                 Dispose();
-                throw ex;
+                throw;
             }
         }
 
@@ -383,6 +459,9 @@ namespace PremiseWebClient {
         /// </summary>
         private async Task<Boolean> SendRequest(string command, string content = "") {
             try {
+                _readCts.Token.ThrowIfCancellationRequested(); 
+                if (_subscriptionClient == null) return false;
+
                 var uri = new Uri(GetUrlFromSysUri(command));
                 string requestString = "POST " + Uri.EscapeUriString(uri.LocalPath + uri.Query) + " HTTP/1.1\r\n";
                 requestString += "User-Agent: PremiseServer .NET Client\r\n";
@@ -397,7 +476,8 @@ namespace PremiseWebClient {
                 Debug.Assert(_subscriptionClient != null);
                 bool b = false;
                 try {
-                    b = await _subscriptionClient.WriteStringAsync(requestString);
+                    if (_subscriptionClient != null)
+                        b = await _subscriptionClient.WriteStringAsync(requestString);
                 }
                 catch (Exception ex) {
                     Debug.WriteLine(ex.ToString());
@@ -405,8 +485,7 @@ namespace PremiseWebClient {
                 return b;
             }
             catch (Exception ex) {
-                Dispose();
-                throw ex;
+                throw;
             }
         }
 
@@ -419,6 +498,10 @@ namespace PremiseWebClient {
             // <content-length><space><command><\r\n\r\n>[content, size_is(content-length)]
             // Content length is hex encoded
             try {
+                _readCts.Token.ThrowIfCancellationRequested();
+
+                if (_subscriptionClient == null) return;
+
                 if (command.StartsWith("sys://")) command = command.Remove(0, 6);
                 string packet = content.Length.ToString("X8");
                 packet += " ";
@@ -432,8 +515,7 @@ namespace PremiseWebClient {
                 await _subscriptionClient.WriteStringAsync(packet);
             }
             catch (Exception ex) {
-                Dispose();
-                throw ex;
+                throw;
             }
         }
 
@@ -450,6 +532,9 @@ namespace PremiseWebClient {
         /// <param name="propertyName"></param>
         public async Task Unsubscribe(PremiseObject po, string propertyName) {
             try {
+                _readCts.Token.ThrowIfCancellationRequested();
+
+                if (_subscriptionClient == null) return;
                 // Find subscription 
                 foreach (var subscription in _subscriptions) {
                     if (subscription.Value.PropertyName == propertyName &&
@@ -466,8 +551,12 @@ namespace PremiseWebClient {
                 }
             }
             catch (Exception ex) {
+                Debug.WriteLine("Subscribe: " + ex);
+                Error = true;
+                LastError = ex.GetType().ToString();
+                LastErrorContent = ex.Message;
                 Dispose();
-                throw ex;
+                throw;
             }
         }
 
@@ -479,12 +568,41 @@ namespace PremiseWebClient {
         ///   "0" or "1"), no response message-body
         /// </summary>
         public void SetValue(string location, string property, string value) {
-            HttpClient webclient =
-                new HttpClient(new HttpClientHandler() {Credentials = new NetworkCredential(Username, Password)});
+            var webclient =
+                new HttpClient(new HttpClientHandler {Credentials = new NetworkCredential(Username, Password)});
             var uri = new Uri(GetUrlFromSysUri(location) + "?e?" + property);
             Debug.WriteLine("SetValue: " + uri + ": " + value);
-            webclient.PostAsync(uri, new StringContent(value));
 
+            // Premise's implementation of HTTP POST does not return an HTTP response.
+            // HttpClient will wait for a response and if it doesn't get one, crash the app
+            // Work around this by cancelling the request after sending it.
+            webclient.PostAsync(uri, new StringContent(value));
+            TaskEx.Delay(100).ContinueWith(task => webclient.CancelPendingRequests());
+        }
+
+        /// <summary>
+        ///  Send a SetValue request to the sever
+        ///   (e.g. url = http://localhost/sys/Home/Kitchen/Overheadlight?e?PowerState, message contains
+        ///   "0" or "1"), no response message-body
+        /// </summary>
+        public async void SetValueAsync(string location, string property, string value) {
+            try {
+                var webclient =
+                    new HttpClient(new HttpClientHandler {Credentials = new NetworkCredential(Username, Password)});
+                var uri = new Uri(GetUrlFromSysUri(location) + "?e?" + property);
+                Debug.WriteLine("SetValue: " + uri + ": " + value);
+
+                // Premise's implementation of HTTP POST does not return an HTTP response.
+                // HttpClient will wait for a response and if it doesn't get one, crash the app
+                // Work around this by cancelling the request after sending it.
+                webclient.PostAsync(uri, new StringContent(value)); // no await; return immediately. 
+                await TaskEx.Delay(100);
+                webclient.CancelPendingRequests();
+            } catch (HttpRequestException httpRequestException) {
+                return;
+            } catch (Exception) {
+                throw;
+            }
         }
 
         /// <summary>
@@ -496,32 +614,19 @@ namespace PremiseWebClient {
         /// </summary>
         public async Task<string> GetValueTaskAsync(string location, string property) {
             try {
-                HttpClient webclient =
-                    new HttpClient(new HttpClientHandler() {Credentials = new NetworkCredential(Username, Password)});
+                var webclient =
+                    new HttpClient(new HttpClientHandler {Credentials = new NetworkCredential(Username, Password)});
                 var uri = new Uri(GetUrlFromSysUri(location) + "!" + property);
                 Debug.WriteLine("GetValueTaskAsync: " + uri);
                 return await webclient.GetStringAsync(uri);
             }
-            catch (Exception ex) {
-                throw ex;
+            catch (HttpRequestException httpRequestException) {
+                return "";
+            }
+            catch (Exception) {
+                throw;
             }
         }
-
-        /// <summary>
-        ///  Send a GetValue request to the sever
-        /// </summary>
-        /// <param name="location"></param>
-        /// <param name="property"></param>
-        /// <param name="cm"></param>
-        //public void GetValueAsync(string location, string property, DownloadStringCompletedEventHandler cm)
-        //{
-        //    WebClient webclient = new WebClient();
-        //    webclient.Credentials = new NetworkCredential(Username, Password);
-        //    var uri = new Uri(GetUrlFromSysUri(location) + "?f??" + property);
-        //    Debug.WriteLine("GetValueAsync: " + uri);
-        //    webclient.DownloadStringCompleted += cm;
-        //    webclient.DownloadStringAsync(uri);
-        //}
 
         /// <summary>
         ///  Send a InvokeMethod request to the sever
@@ -530,14 +635,14 @@ namespace PremiseWebClient {
             // <object>?d?<targetelementid>?[64]<method>
             // TODO: base64 encode method
             try {
-                HttpClient webclient =
-                    new HttpClient(new HttpClientHandler() {Credentials = new NetworkCredential(Username, Password)});
+                var webclient =
+                    new HttpClient(new HttpClientHandler {Credentials = new NetworkCredential(Username, Password)});
                 var uri = new Uri(GetUrlFromSysUri(location) + "?d??" + method);
                 Debug.WriteLine("InvokeMethodTaskAsync: " + uri);
                 return await webclient.GetStringAsync(uri);
             }
             catch (Exception ex) {
-                throw ex;
+                throw;
             }
         }
 
@@ -545,12 +650,12 @@ namespace PremiseWebClient {
         ///   Utility function to convert a sys URI (sys://Home/...) to an 
         ///   HTTP URL (http://server/sys/Home/...)
         /// </summary>
-        public string GetUrlFromSysUri(string SysUrl) {
-            if (SysUrl.StartsWith("sys://")) SysUrl = SysUrl.Remove(0, 6);
-            Uri uriServer = SSL
+        public string GetUrlFromSysUri(string sysUrl) {
+            if (sysUrl.StartsWith("sys://")) sysUrl = sysUrl.Remove(0, 6);
+            Uri uriServer = Ssl
                                 ? new UriBuilder("https", Host, Port, "sys/").Uri
                                 : new UriBuilder("http", Host, Port, "sys/").Uri;
-            return uriServer.AbsoluteUri + SysUrl;
+            return uriServer.AbsoluteUri + sysUrl;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -572,9 +677,12 @@ namespace PremiseWebClient {
 
         #region IDisposable Members
         public void Dispose() {
+            Debug.WriteLine("Disposing PremiseServer");
+            if (_readCts != null)
+                _readCts.Cancel();
             if (_subscriptionClient != null)
                 _subscriptionClient.Dispose();
-            _subscriptionClient = null;
+            Connected = false;
         }
         #endregion
     }

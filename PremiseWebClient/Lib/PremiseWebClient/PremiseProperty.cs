@@ -20,6 +20,7 @@ namespace PremiseWebClient {
     /// </summary>
     public class PremiseProperty {
         public enum PremiseType {
+            TypeNone = 0,
             TypeObjectRef,
             TypeText,
             TypeBoolean,
@@ -47,7 +48,7 @@ namespace PremiseWebClient {
             TimespanProperty,
             UnitProperty,
             TypeImage,
-            TypeHTMLColor,
+            TypeHtmlColor,
             TypeByteArray,
             TypeClassRef,
             TypeFile,
@@ -58,7 +59,7 @@ namespace PremiseWebClient {
 
         private object _value;
 
-        public PremiseProperty(String propertyName, PremiseType type, bool persistent = false, bool ignoreServer = false) {
+        public PremiseProperty(String propertyName, PremiseType type = PremiseType.TypeNone, bool persistent = false, bool ignoreServer = false) {
             Name = propertyName;
             PropertyType = type;
             //UpdatedFromServer = false;
@@ -81,6 +82,30 @@ namespace PremiseWebClient {
                     _value = null;
                     return;
                 }
+
+                // If the type is not set the set it based on the value
+                if (PropertyType == PremiseType.TypeNone) {
+                    if (value is string) {
+                        string s = value.ToString().ToLower();
+                        if (s.EndsWith("%"))
+                            PropertyType = PremiseType.TypePercent;
+                        else if (s == "on" || s == "off" || s == "yes" || s == "no")
+                            PropertyType = PremiseType.TypeBoolean;
+                        else
+                            PropertyType = PremiseType.TypeText;
+                    }
+                    if (value is bool)
+                        PropertyType = PremiseType.TypeBoolean;
+                    if (value is int)
+                        PropertyType = PremiseType.TypeInteger;
+                    if (value is double || value is float)
+                        PropertyType = PremiseType.TypeFloat;
+                    if (value is DateTime)
+                        PropertyType = PremiseType.TypeDateTime;
+                    _value = value;
+                    return;
+                }
+
                 // coerce new value to correct type
                 switch (PropertyType) {
                     case PremiseType.TypeText:
@@ -88,11 +113,12 @@ namespace PremiseWebClient {
                         break;
                     case PremiseType.TypeBoolean:
                         bool b;
-                        if (bool.TryParse(value.ToString(), out b))
-                            _value = b;
-                        else if (value is int) {
+                        if (value is bool)
+                            _value = value;
+                        else if (value is int) 
                             _value = ((int) value != 0);
-                        }
+                        else if (bool.TryParse(value.ToString(), out b))
+                            _value = b;
                         else if (value is string) {
                             switch (value.ToString().ToLower()) {
                                 case "yes":
@@ -157,7 +183,7 @@ namespace PremiseWebClient {
                     case PremiseType.TimespanProperty:
                     case PremiseType.UnitProperty:
                     case PremiseType.TypeImage:
-                    case PremiseType.TypeHTMLColor:
+                    case PremiseType.TypeHtmlColor:
                     case PremiseType.TypeByteArray:
                     case PremiseType.TypeClassRef:
                     case PremiseType.TypeFile:

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -53,24 +53,6 @@
     <Compile Include="MainActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\..\PremiseLib\IPremiseNotify.cs">
-      <Link>PremiseLib\IPremiseNotify.cs</Link>
-    </Compile>
-    <Compile Include="..\..\PremiseLib\IPremiseSocket.cs">
-      <Link>PremiseLib\IPremiseSocket.cs</Link>
-    </Compile>
-    <Compile Include="..\..\PremiseLib\PremiseCommand.cs">
-      <Link>PremiseLib\PremiseCommand.cs</Link>
-    </Compile>
-    <Compile Include="..\..\PremiseLib\PremiseObject.cs">
-      <Link>PremiseLib\PremiseObject.cs</Link>
-    </Compile>
-    <Compile Include="..\..\PremiseLib\PremiseProperty.cs">
-      <Link>PremiseLib\PremiseProperty.cs</Link>
-    </Compile>
-    <Compile Include="..\..\PremiseLib\PremiseServer.cs">
-      <Link>PremiseLib\PremiseServer.cs</Link>
-    </Compile>
     <Compile Include="..\..\pr\PremiseTcpClientSocket.cs">
       <Link>PremiseTcpClientSocket.cs</Link>
     </Compile>
@@ -87,7 +69,11 @@
     <AndroidResource Include="Resources\drawable\Icon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
+  <ItemGroup />
   <ItemGroup>
-    <Folder Include="PremiseLib\" />
+    <ProjectReference Include="..\..\Lib\PremiseWebClient\PremiseWebClient.csproj">
+      <Project>{88A57AAC-25E5-4089-BA2A-730F916796F4}</Project>
+      <Name>PremiseWebClient</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>
