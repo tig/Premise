@@ -65,15 +65,17 @@ namespace PremiseWebClient {
                     _properties[propertyName] = new PremiseProperty(propertyName) { PropertyType = type };
                 }
 
-                //Debug.WriteLine("getting {0} {1}", Location, propertyName);
+                if (subscribe) {
+                    await PremiseServer.Instance.Subscribe(this, propertyName);
+                }
+
+                // Sadly, premise does not automatically send a update notification upon
+                // a subscription. Thus even for properites where we are using a subscription
+                // we have to block waiting for the initial value. 
                 string val = await PremiseServer.Instance.GetValueTaskAsync(Location, propertyName);
                 Debug.WriteLine("got {0} {1} = {2}", Location, propertyName, val);
 
                 SetMember(propertyName, val, false);
-                if (subscribe)
-                    // BUGBUG: Should we await here? 
-                    PremiseServer.Instance.Subscribe(this, propertyName);
-
                 HasServerData = true;
             } catch (Exception) {
                 throw;
@@ -81,7 +83,8 @@ namespace PremiseWebClient {
         }
 
         /// <summary>
-        ///     Add a property to the object. Makes a call to the server to get the value.
+        ///     Add a property to the object. Makes a call to the server to get the value if
+        ///     initialValue is not specified or subscribe is set to true.
         /// </summary>
         /// <param name="propertyName">Name of the property (e.g. foo["propertyname"])</param>
         /// <param name="initalValue">Initial value for the property (enables reducing UI churn on first load)</param>
@@ -96,26 +99,33 @@ namespace PremiseWebClient {
             if (!_properties.TryGetValue(propertyName, out prop)) {
                 _properties[propertyName] = new PremiseProperty(propertyName) {PropertyType = type, Value = initalValue};
             }
+
+            // Ignore server
+            if (initalValue != null && subscribe == false) return;
+
             await AddPropertyAsync(propertyName, type, subscribe);
         }
 
-        /// <summary>
-        ///     Add a command property to the object. Commands are boolean toggles, so there is
-        ///     no need to request the state from the server.
-        /// </summary>
-        /// <param name="commandName">Name of the command (e.g. foo["trigger"])</param>
-        /// <returns></returns>
-        public void AddCommand(string commandName) {
-            try {
-                _properties[commandName] = new PremiseProperty(commandName, PremiseProperty.PremiseType.TypeBoolean);
+        ///// <summary>
+        /////     Add a command property to the object. Commands that are not also properties are boolean toggles, so there is
+        /////     no need to request the state from the server. 
+        ///// </summary>
+        ///// <param name="commandName">Name of the command (e.g. "trigger" in foo["triggerCommand"])</param>
+        ///// <returns></returns>
+        //public void AddCommand(string commandName) {
+        //    try {
+        //        PremiseProperty prop;
+        //        if (!_properties.TryGetValue(commandName, out prop)) {
+        //            _properties[commandName] = new PremiseProperty(commandName, PremiseProperty.PremiseType.TypeBoolean);
+        //        }
+                
+        //        // Make sure any subscribers get notified with the correct property name
+        //        OnPropertyChanged(commandName + "Command");
 
-                // Make sure any subscribers get notified with the correct property name
-                OnPropertyChanged(commandName + "Command");
-
-            } catch (Exception ex) {
-                throw;
-            }
-        }
+        //    } catch (Exception ex) {
+        //        throw;
+        //    }
+        //}
 
         /// <summary>
         /// Property accessor. Simulates a dynamic object.
@@ -129,13 +139,10 @@ namespace PremiseWebClient {
                     return prop.Value;
 
                 // In XAML <Button Content="Press Me" Command="{Binding [TriggerCommand]}">
-                // where 'Trigger' is the name of the property that is momentary
-                if (name.EndsWith("Command")) {
-                    string cmd = name.Substring(0, name.Length - "Command".Length);
-                    if (_properties.TryGetValue(cmd, out prop)) {
-                        return new PremiseCommand(this, cmd);
-                    }
-                }
+                // where 'Trigger' is the name of the property that is momentary.
+                // All Properties can be Commands.
+                if (name.EndsWith("Command")) 
+                    return new PremiseCommand(this, name.Substring(0, name.Length - "Command".Length));
 
                 return null;
             }
@@ -186,7 +193,7 @@ namespace PremiseWebClient {
             var server = PremiseServer.Instance;
             if (server != null && !String.IsNullOrEmpty(Location)) {
                 // Spin up a new thread for this to get it off the UI thread (not really needed, probably)
-                Task.Factory.StartNew(() => server.SetValue(Location, propertyName, value.ToString()));
+                Task.Factory.StartNew(() => server.SetValueAsync(Location, propertyName, value.ToString()));
             }
         }
 

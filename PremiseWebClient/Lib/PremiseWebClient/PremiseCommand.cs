@@ -2,6 +2,20 @@
 using System.Windows.Input;
 
 namespace PremiseWebClient {
+    /// <summary>
+    /// PremiseCommand supports XAML Commands. 
+    /// For example:
+    ///    CheckBox DataContext="{Binding GDOPower}" 
+    ///    IsChecked="{Binding [State], Mode=TwoWay}" 
+    ///    Command="{Binding [StateCommand]}" 
+    ///    CommandParameter="{Binding Path=IsChecked, RelativeSource={RelativeSource Self}}"
+    /// 
+    /// and, as a Trigger:
+    /// 
+    ///   Button DataContext="{Binding}" 
+    ///   Content="{Binding [GarageDoorOpened], Converter={StaticResource GDOOpenCloseCommandConverter}}" 
+    ///   Command="{Binding [TriggerCommand]}"
+    /// </summary>
     public class PremiseCommand : ICommand {
         private string _propertyName;
         private dynamic _holdingObject;
@@ -39,7 +53,9 @@ namespace PremiseWebClient {
 
         public void Execute(object parameter) {
             if (_holdingObject != null && !String.IsNullOrEmpty(_propertyName))
-                _holdingObject.SetMember(_propertyName, true);
+                // If there is no CommandParameter assume it is a Toggle property
+                // and set it to true.
+                _holdingObject.SetMember(_propertyName, parameter ?? true);
         }
 
         public event EventHandler CanExecuteChanged;

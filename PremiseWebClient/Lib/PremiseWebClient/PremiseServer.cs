@@ -1,4 +1,4 @@
-﻿// Copyright 2013 Kindel Systems
+﻿// Copyright 2014 Kindel Systems
 //   
 
 using System;
@@ -595,7 +595,7 @@ namespace PremiseWebClient {
                 // Premise's implementation of HTTP POST does not return an HTTP response.
                 // HttpClient will wait for a response and if it doesn't get one, crash the app
                 // Work around this by cancelling the request after sending it.
-                webclient.PostAsync(uri, new StringContent(value)); // no await; return immediately. 
+                await webclient.PostAsync(uri, new StringContent(value)); // no await; return immediately. 
                 await TaskEx.Delay(100);
                 webclient.CancelPendingRequests();
             } catch (HttpRequestException httpRequestException) {

@@ -62,10 +62,12 @@ namespace PremiseWebClient {
         public PremiseProperty(String propertyName, PremiseType type = PremiseType.TypeNone, bool persistent = false, bool ignoreServer = false) {
             Name = propertyName;
             PropertyType = type;
-            //UpdatedFromServer = false;
+            HasValue = false;
             Persistent = persistent;
             IgnoreServer = ignoreServer;
         }
+
+        public bool HasValue { get; set; }
 
         /// <summary>
         ///     The Premse type
@@ -78,6 +80,7 @@ namespace PremiseWebClient {
         public object Value {
             get { return _value; }
             set {
+                HasValue = true;
                 if (value == null) {
                     _value = null;
                     return;
@@ -202,6 +205,8 @@ namespace PremiseWebClient {
         // <TextBlock Text="{Binding [Description]}"/>
         public static string NameFromItem(string item) {
             // "Item[PropertyName]"
+            if (!item.StartsWith("Item["))
+                return null;
             return item.Substring(5, item.Length - 6);
         }
 

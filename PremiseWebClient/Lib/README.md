@@ -1,6 +1,6 @@
 Premise WebClient Portable Class Library
 =======
-*Copyright © 2013 Kindel Systems*
+*Copyright © 2014 Kindel Systems*
 
 ## Premise WebClient .NET Client Portable Class Library
 *A .NET Portable Class Library (PCL) for accessing Premise from .NET.*

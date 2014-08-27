@@ -1,6 +1,6 @@
 Premise WebClient .NET Client Library Project
 =======
-*Copyright © 2013 Kindel Systems*
+*Copyright © 2014 Kindel Systems*
 
 This project includes the following:
 
@@ -75,6 +75,10 @@ deskButton["Trigger"] = true;
 // UI easy. Use the syntax "<name>Command" in your XAML or code and PremiseLib
 // will automatically set the property to true under the covers.
 deskButton["TriggerCommand"].Execute(null);
+
+// PremiseLib also supports optional CommandParameters for XAML Commands.
+deskButton["DescriptionCommand"].Execute("Hello");
+
 ```
 
 Example of setting properties in code.

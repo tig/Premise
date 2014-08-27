@@ -90,21 +90,23 @@ namespace pr {
             };
 
             try {
-                await _server.StartSubscriptionsAsync(new PremiseTcpClientSocket());
                 _server.FastMode = fastmode;
+                await _server.StartSubscriptionsAsync(new PremiseTcpClientSocket());
 
+                //_server.SetValueAsync("sys://Home/Admin/Garage Door Power", "State", "False");
+                //_server.SetValueAsync("sys://Home/Admin/Garage Door Power", "State", "True");
                 // Don't await to prove that it works async.
-                TestSubscriptions();
+                //TestSubscriptions();
 
-                await TestRecurringUpdate();
+                //await TestRecurringUpdate();
 
                 //await TestGetXML();
 
-                //await TestCommandExecute();
+                await TestCommandExecute();
 
-                await TestInvokeMethod();
+                //await TestInvokeMethod();
 
-                TestGetLights();
+                //TestGetLights();
 
             }
             catch (System.Net.Sockets.SocketException socketException) {
@@ -137,8 +139,11 @@ namespace pr {
             PremiseObject ob = new PremiseObject("sys://Home/Downstairs/Office/Undercounter");
             ob.PropertyChanged += (sender, args) => {
                 var propName = PremiseProperty.NameFromItem(args.PropertyName);
-                var val = ((PremiseObject)sender)[propName];
-                Console.WriteLine("TestSubscriptions {0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
+                if (propName != null) {
+                    var val = ((PremiseObject) sender)[propName];
+                    Console.WriteLine("TestSubscriptions {0}: {1} = {2}", ((PremiseObject) sender).Location, propName,
+                        val);
+                }
             };
 
             ob.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
@@ -174,10 +179,10 @@ namespace pr {
 
         private async Task TestRecurringUpdate() {
             //sys://Home/Admin/EqupTemp_VoltageSensor
-            PremiseObject voltage = await WatchObjectAsync("sys://Home/Admin/EqupTemp_VoltageSensor",
+            PremiseObject voltage = await WatchObjectAsync("sys://Home/Downstairs/Office/Equipment Room/Kindel_TemperatureSensor",
                                                           new PremiseProperty("Name",
                                                                               PremiseProperty.PremiseType.TypeText),
-                                                          new PremiseProperty("Voltage",
+                                                          new PremiseProperty("Temperature",
                                                                               PremiseProperty.PremiseType.TypeFloat));
             //voltage.PropertyChanged += (sender, args) => {
             //    var propName = PremiseProperty.NameFromItem(args.PropertyName);
@@ -241,24 +246,35 @@ namespace pr {
         }
 
         private async Task TestCommandExecute() {
+
             var buttons = new KeypadButtons();
             foreach (PremiseObject button in buttons) {
                 button.PropertyChanged += (sender, args) => {
                     var propName = PremiseProperty.NameFromItem(args.PropertyName);
+                    if (propName == null) return;
                     var val = ((PremiseObject)sender)[propName];
                     Console.WriteLine("TestCommandExecute {0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
                 };
             }
             buttons[0]["TriggerCommand"].Execute(null);
-            Thread.Sleep(1000);
+            Thread.Sleep(5000);
             buttons[0]["TriggerCommand"].Execute(null);
-           
+
+            dynamic GDOPower;
+            GDOPower = new PremiseObject("sys://Home/Admin/Garage Door Power");
+            await GDOPower.AddPropertyAsync("DisplayName", "GDO Power", PremiseProperty.PremiseType.TypeText, true);
+            await GDOPower.AddPropertyAsync("State", PremiseProperty.PremiseType.TypeBoolean, true);
+
+            GDOPower["StateCommand"].Execute(false);
+            Thread.Sleep(1000);
+            GDOPower["StateCommand"].Execute(true);
+
         }
 
         private class KeypadButtons : ObservableCollection<dynamic> {
             public KeypadButtons() : base() {
                 Add(new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Workshop"));
-                Add(new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Equipment"));
+                //Add(new PremiseObject("sys://Home/Downstairs/Office/Office At Entry Door/Button_Equipment"));
 
                 foreach (PremiseObject o in this) {
                     o.AddPropertyAsync("Name", PremiseProperty.PremiseType.TypeText);
@@ -276,6 +292,7 @@ namespace pr {
             var o = new PremiseObject(location);
             o.PropertyChanged += (sender, args) => {
                 var propName = PremiseProperty.NameFromItem(args.PropertyName);
+                if (propName == null) return;
                 var val = ((PremiseObject)sender)[propName];
                 Console.WriteLine("{0}: {1} = {2}", ((PremiseObject)sender).Location, propName, val);
             };

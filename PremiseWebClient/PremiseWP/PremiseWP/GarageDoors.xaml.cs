@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Navigation;
 using Microsoft.Phone.Controls;
 using Microsoft.Phone.Shell;
@@ -18,13 +20,15 @@ namespace PremiseWP {
 
         // Load data for the ViewModel Items
         protected async override void OnNavigatedTo(NavigationEventArgs e) {
-            if (!PremiseServer.Instance.Connected) {
-                await PremiseServer.Instance.StartSubscriptionsAsync(new StreamSocketPremiseSocket());
-            } 
             App.GarageDoorsViewModel.LoadData();
         }
 
-        private void PinToStart(object sender, EventArgs e) {
+        private void Refresh_Click(object sender, EventArgs e){
+            PremiseServer.Instance.StopSubscriptions();
+            App.GarageDoorsViewModel.LoadData();
+        }
+        
+        private void PinToStart(object sender, EventArgs e){
             var newTile = new StandardTileData {
                 Title = "Garage Doors",
                 BackgroundImage = new Uri("/Assets/Tiles/garage_icon_173.png", UriKind.Relative),
