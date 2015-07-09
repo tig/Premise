@@ -12,10 +12,10 @@ using Microsoft.Phone.Shell;
 namespace PremiseWP {
     public class Settings {
         public Settings() {
-            Host = "home.kindel.net";
-            Port = 86;
+            Host = "";
+            Port = 80;
             Ssl = false;
-            Username = "tester";
+            Username = "";
             Password = "";
         }
 
