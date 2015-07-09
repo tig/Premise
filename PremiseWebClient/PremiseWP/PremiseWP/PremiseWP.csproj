@@ -93,6 +93,9 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="AudioZones.xaml.cs">
+      <DependentUpon>AudioZones.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Lights.xaml.cs">
       <DependentUpon>Lights.xaml</DependentUpon>
     </Compile>
@@ -105,6 +108,7 @@
     </Compile>
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="ViewModels\AudioZonesViewModel.cs" />
     <Compile Include="ViewModels\LightsViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\GarageDoorsViewModel.cs" />
@@ -127,6 +131,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </ApplicationDefinition>
+    <Page Include="AudioZones.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Lights.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

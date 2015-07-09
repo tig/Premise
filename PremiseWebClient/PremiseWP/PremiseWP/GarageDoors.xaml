@@ -57,13 +57,13 @@
         <!--TitlePanel contains the name of the application and page title-->
         <StackPanel x:Name="TitlePanel"
 		            Grid.Row="0"
-		            Margin="24,24,0,12">
+		            Margin="24,4,0,12">
             <TextBlock x:Name="ApplicationTitle"
 			           Text="{Binding ApplicationTitle}"
-			           Style="{StaticResource PhoneTextNormalStyle}"/>
+			           Style="{StaticResource PhoneTextNormalStyle}" Margin="12,0"/>
             <TextBlock x:Name="PageTitle"
 			           Text="{Binding PageName}"
-			           Margin="-3,-8,0,0"
+			           Margin="-3,-12,0,0"
 			           Style="{StaticResource PhoneTextTitle1Style}" />
         </StackPanel>
 
@@ -78,7 +78,7 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                    <StackPanel Margin="0,12,0,0">
+                                    <StackPanel Margin="0,4,0,0">
                                         <!-- We use Description instead of DisplayName because DisplayName changes for GDOs. -->
                                         <TextBlock TextAlignment="Left" TextWrapping="NoWrap" Width="320"
                                                Text="{Binding [Description]}" Style="{StaticResource PhoneTextLargeStyle}"/>
@@ -91,7 +91,7 @@
                                     Content="{Binding [GarageDoorOpened], Converter={StaticResource GDOOpenCloseCommandConverter}}" 
                                     Style="{StaticResource GDOButtonStyle}"
                                     IsEnabled="{Binding [GarageDoorOpened], Converter={StaticResource PremisePropertyHasValueConverter}}"
-                                    Command="{Binding [TriggerCommand]}"  
+                                    Command="{Binding [TriggerCommand]}" Height="80"  
                                     >
                                     </Button>
                                 </StackPanel>
@@ -103,8 +103,8 @@
                               Content="{Binding [DisplayName]}" 
                               IsChecked="{Binding [State], Mode=TwoWay}" 
                               />
-                    
-                   <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock DataContext="{Binding LightsOff}" 
                 		Text="{Binding [DisplayName]}"
                 		TextAlignment="Left" TextWrapping="NoWrap" Width="320"
@@ -115,7 +115,7 @@
                 		Content="▬" 
                 		Foreground="{Binding [Status], Converter={StaticResource LightingButtonStatusConverter}}"
                         IsEnabled="{Binding HasServerData}"
-                		Command="{Binding [TriggerCommand]}"
+                		Command="{Binding [TriggerCommand]}" Height="80" 
                         />
                     </StackPanel>
                 </StackPanel>

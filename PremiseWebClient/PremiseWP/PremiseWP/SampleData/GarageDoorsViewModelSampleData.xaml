@@ -6,7 +6,7 @@
     IsDataLoaded="False">
 
     <vm:GarageDoorsViewModel.GDOItems>
-        <vm:Po>
+        L
             <vm:Po.Properties>
                 <vm:Pp x:Key="Description"  Value="East garage door"/>
                 <vm:Pp x:Key="GarageDoorStatus" Value="Closed" />

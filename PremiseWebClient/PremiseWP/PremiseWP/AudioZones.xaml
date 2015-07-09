@@ -1,0 +1,112 @@
+﻿<phone:PhoneApplicationPage
+    x:Class="PremiseWP.AudioZones"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:phone="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"
+    xmlns:shell="clr-namespace:Microsoft.Phone.Shell;assembly=Microsoft.Phone"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:PremiseWP.ViewModels"
+    FontFamily="{StaticResource PhoneFontFamilyNormal}"
+    FontSize="{StaticResource PhoneFontSizeNormal}"
+    Foreground="{StaticResource PhoneForegroundBrush}"
+    SupportedOrientations="Portrait" Orientation="Portrait"
+    d:DataContext="{d:DesignInstance vm:SampleAudio, IsDesignTimeCreatable=True}"
+    mc:Ignorable="d"
+    shell:SystemTray.IsVisible="True">
+
+    <phone:PhoneApplicationPage.Resources>
+        <vm:BrightnessConverter x:Key="BrightnessConverter"/>
+        <Style x:Key="LightButtonStyle" TargetType="Button">
+            <Setter Property="Width"                Value="120"/>
+            <Setter Property="Height"               Value="85"/>
+            <Setter Property="VerticalAlignment"    Value="Top" />
+            <Setter Property="HorizontalAlignment"  Value="Left"/>
+            <Setter Property="Background"           Value="Black" />
+            <Setter Property="Foreground"           Value="WhiteSmoke" />
+            <Setter Property="BorderBrush"          Value="WhiteSmoke"/>
+            <Setter Property="BorderThickness"      Value="1" />
+            <Setter Property="Padding"              Value="0"/>
+            <Setter Property="FontSize"             Value="{StaticResource PhoneFontSizeMedium}"/>
+        </Style>
+        <Style x:Key="TriggerButtonStyle" TargetType="Button">
+            <Setter Property="Width"                Value="120"/>
+            <Setter Property="Height"               Value="85"/>
+            <Setter Property="VerticalAlignment"    Value="Top" />
+            <Setter Property="HorizontalAlignment"  Value="Left"/>
+            <Setter Property="Background"           Value="Black" />
+            <Setter Property="Foreground"           Value="GreenYellow" />
+            <Setter Property="BorderBrush"          Value="WhiteSmoke"/>
+            <Setter Property="BorderThickness"      Value="1" />
+            <Setter Property="Padding"              Value="0"/>
+            <Setter Property="FontSize"             Value="{StaticResource PhoneFontSizeMedium}"/>
+        </Style>
+    </phone:PhoneApplicationPage.Resources>
+    <!--Data context is set to sample data above and LayoutRoot contains the root grid where all other page content is placed-->
+    <Grid x:Name="LayoutRoot" Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!--TitlePanel contains the name of the application and page title-->
+        <StackPanel x:Name="TitlePanel"
+		            Grid.Row="0"
+		            Margin="24,24,0,12">
+            <TextBlock x:Name="ApplicationTitle"
+			           Text="{Binding ApplicationTitle}"
+			           Style="{StaticResource PhoneTextNormalStyle}"/>
+            <TextBlock x:Name="PageTitle"
+			           Text="{Binding PageName}"
+			           Margin="-3,-8,0,0"
+			           Style="{StaticResource PhoneTextTitle1Style}" />
+        </StackPanel>
+
+        <!--ContentPanel contains ListBox and ListBox ItemTemplate. Place additional content here-->
+        <Grid x:Name="ContentPanel" Grid.Row="1" Margin="12,0,12,0"
+              Visibility="{Binding IsDataLoaded,  Converter={StaticResource VisibilityConverter}}">
+            <ListBox x:Name="AudioListBox" 
+                        Margin="0,0,-12,0" 
+                        ItemsSource="{Binding AudioZones}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,0,0,0" Orientation="Vertical" Width="460">
+                            <Grid >
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="120" />
+                                </Grid.RowDefinitions>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="260" />
+                                    <ColumnDefinition Width="220" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,0">
+                                    <TextBlock TextAlignment="Left" TextWrapping="NoWrap" 
+                                            Text="{Binding [Name]}" Style="{StaticResource PhoneTextLargeStyle}"/>
+                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap" 
+                                            Text="{Binding [Description]}" Style="{StaticResource PhoneTextSmallStyle}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="1" FlowDirection="LeftToRight">
+                                    <CheckBox Content="Mute" 
+                                                IsChecked="{Binding [Mute], Mode=TwoWay}"
+                                                HorizontalAlignment="Left"  Width="200" VerticalContentAlignment="Stretch"/>
+                                </StackPanel>
+                            </Grid>
+                            <Slider x:Name="Volume" Margin="0,-50,0,-20"
+                                        Value="{Binding [Volume], Mode=TwoWay, Converter={StaticResource BrightnessConverter}}" 
+                                        Maximum="1" LargeChange="0.1" SmallChange="0.01" VerticalAlignment="Top" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </Grid>
+    <phone:PhoneApplicationPage.ApplicationBar>
+        <shell:ApplicationBar IsVisible="True" IsMenuEnabled="True" Mode="Minimized" Opacity="0.5">
+            <!--<shell:ApplicationBarIconButton IconUri="/Assets/feature.settings.png" Text="settings" Click="Settings_Click"/>-->
+            <shell:ApplicationBar.MenuItems>
+                <shell:ApplicationBarMenuItem Text="pin to start" Click="PinToStart"/>
+            </shell:ApplicationBar.MenuItems>
+        </shell:ApplicationBar>
+    </phone:PhoneApplicationPage.ApplicationBar>
+</phone:PhoneApplicationPage>

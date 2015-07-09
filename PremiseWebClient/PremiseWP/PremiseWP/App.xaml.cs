@@ -52,6 +52,21 @@ namespace PremiseWP {
             }
         }
 
+
+        private static AudioZonesViewModel _AudioZonesViewModel;
+        /// <summary>
+        /// A static ViewModel used by the views to bind against.
+        /// </summary>
+        /// <returns>The AudioViewModel object.</returns>
+        public static AudioZonesViewModel AudioZonesViewModel
+        {
+            get
+            {
+                // Delay creation of the view model until necessary
+                return _AudioZonesViewModel ?? (_AudioZonesViewModel = new AudioZonesViewModel());
+            }
+        }
+
         private static SettingsViewModel _settingsViewModel;
         /// <summary>
         /// A static ViewModel used by the views to bind against.
@@ -77,7 +92,7 @@ namespace PremiseWP {
             UnhandledException += Application_UnhandledException;
 
             PremiseServer.Instance.Notifier = new WPIPremiseNotify();
-            PremiseServer.Instance.FastMode = true;
+            PremiseServer.Instance.FastMode = true ;
 
 
             // Standard XAML initialization

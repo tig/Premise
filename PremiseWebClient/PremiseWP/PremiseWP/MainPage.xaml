@@ -65,7 +65,10 @@
                                  NavigateUri="/Lights.xaml" 
                                  FontSize="{StaticResource PhoneFontSizeExtraLarge}" 
                                  />
-            </StackPanel>
+                <HyperlinkButton Content="Audio Zones" 
+                                 NavigateUri="/AudioZones.xaml" 
+                                 FontSize="{StaticResource PhoneFontSizeExtraLarge}" 
+                                 />            </StackPanel>
         </Grid>
 
         <!--Uncomment to see an alignment grid to help ensure your controls are

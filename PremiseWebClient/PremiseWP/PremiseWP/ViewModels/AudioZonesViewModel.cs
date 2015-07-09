@@ -10,11 +10,11 @@ using PremiseWP.Annotations;
 using PremiseWebClient;
 
 namespace PremiseWP.ViewModels {
-    public class LightsViewModel : INotifyPropertyChanged {
-        public LightsViewModel() {
+    public class AudioZonesViewModel : INotifyPropertyChanged {
+        public AudioZonesViewModel() {
             ApplicationTitle = "Kindel Residence";
-            PageName = "Lights";
-            Lights = new ObservableCollection<PremiseObject>();
+            PageName = "Audio";
+            AudioZones = new ObservableCollection<PremiseObject>();
         }
 
         public String ApplicationTitle { get; set; }
@@ -23,9 +23,8 @@ namespace PremiseWP.ViewModels {
         /// <summary>
         /// A collection for ItemViewModel objects.
         /// </summary>
-        public ObservableCollection<PremiseObject> Lights { get; private set; }
-        public PremiseObject LightsOff { get; private set; }
-
+        public ObservableCollection<PremiseObject> AudioZones { get; private set; }
+        
         private bool _isDataLoaded;
         public bool IsDataLoaded {
             get { return _isDataLoaded; }
@@ -44,22 +43,14 @@ namespace PremiseWP.ViewModels {
         /// Creates and adds a few ItemViewModel objects into the Items collection.
         /// </summary>
         public async void LoadData() {
-            if (Lights.Count > 0) return;
+            if (AudioZones.Count > 0) return;
 
-            string lights = await PremiseServer.Instance.InvokeMethodTaskAsync("sys://Home/Admin/WebClientMethods", "GetLights(\"sys://Home\")");
-            Debug.WriteLine("Result: {0}", lights);
+            string audiozones = await PremiseServer.Instance.InvokeMethodTaskAsync("sys://Home/Admin/WebClientMethods", "GetAudio(\"sys://Home/Admin\")");
+            Debug.WriteLine("Result: {0}", audiozones);
 
             // <-- this is the whole cause of this confusing architecture
-            foreach (string location in lights.Split(',').Where(location => location.Length > 0))
+            foreach (string location in audiozones.Split(',').Where(location => location.Length > 0))
                 AddLight(location);
-
-            //AddLight("sys://Home/Downstairs/Office/Surface");
-            //AddLight("sys://Home/Downstairs/Office/Undercounter");
-            //AddLight("sys://Home/Downstairs/Office/Uplighting");
-            //AddLight("sys://Home/Downstairs/Office/Desk");
-            //AddLight("sys://Home/Downstairs/Office/Equipment Room/Fluorescents");
-            //AddLight("sys://Home/Downstairs/Office/Workshop/Undercounter");
-            //AddLight("sys://Home/Downstairs/Office/Workshop/Fluorescents");
             this.IsDataLoaded = true;
         }
 
@@ -67,10 +58,9 @@ namespace PremiseWP.ViewModels {
             var o = new PremiseObject(location);
             o.AddPropertyAsync("Name", PremiseProperty.PremiseType.TypeText);
             o.AddPropertyAsync("Description",  PremiseProperty.PremiseType.TypeText);
-            o.AddPropertyAsync("PowerState", PremiseProperty.PremiseType.TypeBoolean, true);
-            if (!location.Contains("Fluorescent") && !location.Contains("Flourescent") && !location.Contains("Fan"))
-                o.AddPropertyAsync("Brightness", PremiseProperty.PremiseType.TypePercent, true);
-            Lights.Add(o);
+            o.AddPropertyAsync("Mute", PremiseProperty.PremiseType.TypeBoolean, true);
+            o.AddPropertyAsync("Volume", PremiseProperty.PremiseType.TypePercent, true);
+            AudioZones.Add(o);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -82,7 +72,7 @@ namespace PremiseWP.ViewModels {
         }
     }
 
-    public class VolumeConverter : IValueConverter {
+    public class BrightnessConverter : IValueConverter {
         #region IValueConverter Members
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
@@ -104,7 +94,7 @@ namespace PremiseWP.ViewModels {
         #endregion
     }
 
-    public class SampleLights : INotifyPropertyChanged {
+    public class SampleAudio : INotifyPropertyChanged {
         public bool IsDataLoaded {
             get;
             set;
@@ -116,25 +106,25 @@ namespace PremiseWP.ViewModels {
         }
         public String ApplicationTitle { get; set; }
         public String PageName { get; set; }
-        public ObservableCollection<PremiseObject> Lights { get; private set; }
-        public PremiseObject LightsOff { get; private set; }
-        public SampleLights() {
+        public ObservableCollection<PremiseObject> AudioZones { get; private set; }
+        public PremiseObject AudioOff { get; private set; }
+        public SampleAudio() {
             ApplicationTitle = "Premise Demo";
-            PageName = "Lights";
+            PageName = "Audio Zones";
             IsDataLoaded = true;
-            Lights = new ObservableCollection<PremiseObject>();
+            AudioZones = new ObservableCollection<PremiseObject>();
 
             for (int i = 1 ; i < 10 ; i++)
-                AddLight("Light Number " + i);
+                AddLight("Zone Number " + i);
         }
 
         public void AddLight(string name) {
             var o = new PremiseObject(name);
             o["Name"] = name;
             o["Description"] = name + " descripton";
-            o["PowerState"] = false;
-            o["Brightness"] = 0.75;
-            Lights.Add(o);
+            o["Mute"] = false;
+            o["Volume"] = 0.75;
+            AudioZones.Add(o);
         }
 
         public string Location { get; set; }
